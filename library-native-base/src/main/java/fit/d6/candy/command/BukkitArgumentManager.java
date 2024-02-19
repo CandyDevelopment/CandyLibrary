@@ -212,4 +212,9 @@ public class BukkitArgumentManager implements ArgumentManager {
         return RotationArgumentType.ROTATION;
     }
 
+    @Override
+    public @NotNull ArgumentType duration() {
+        return DurationArgumentType.DURATION;
+    }
+
 }

@@ -127,4 +127,7 @@ public interface ArgumentManager {
     @NotNull
     ArgumentType rotation();
 
+    @NotNull
+    ArgumentType duration();
+
 }

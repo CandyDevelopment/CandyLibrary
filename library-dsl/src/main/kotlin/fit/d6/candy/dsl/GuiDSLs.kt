@@ -1,21 +1,10 @@
 package fit.d6.candy.dsl
 
 import fit.d6.candy.api.gui.GuiAudience
-import fit.d6.candy.api.gui.GuiContext
 import fit.d6.candy.api.gui.GuiService
-import fit.d6.candy.api.gui.anvil.AnvilGui
-import fit.d6.candy.api.gui.anvil.AnvilGuiClickContext
-import fit.d6.candy.api.gui.anvil.AnvilGuiContext
-import fit.d6.candy.api.gui.anvil.AnvilGuiInitializer
-import fit.d6.candy.api.gui.anvil.AnvilGuiRenderer
-import fit.d6.candy.api.gui.anvil.AnvilSlot
+import fit.d6.candy.api.gui.anvil.*
 import fit.d6.candy.api.gui.item.ItemBuilder
-import fit.d6.candy.api.gui.normal.NormalGui
-import fit.d6.candy.api.gui.normal.NormalGuiClickContext
-import fit.d6.candy.api.gui.normal.NormalGuiContext
-import fit.d6.candy.api.gui.normal.NormalGuiInitializer
-import fit.d6.candy.api.gui.normal.NormalGuiRenderer
-import fit.d6.candy.api.gui.normal.NormalGuiScene
+import fit.d6.candy.api.gui.normal.*
 import fit.d6.candy.api.gui.slot.SlotBuilder
 import org.bukkit.entity.Player
 import org.bukkit.plugin.Plugin
@@ -80,7 +69,7 @@ fun AnvilGuiRenderer.Slot(slot: AnvilSlot, content: AnvilSlotBuilder.() -> Unit)
     }
 }
 
-class NormalSlotBuilder internal constructor(){
+class NormalSlotBuilder internal constructor() {
 
     private var image: (ItemBuilder.(NormalGuiContext) -> Unit)? = null
     private var clicker: ((NormalGuiClickContext) -> Unit)? = null
@@ -108,7 +97,7 @@ class NormalSlotBuilder internal constructor(){
 
 }
 
-class AnvilSlotBuilder internal constructor(){
+class AnvilSlotBuilder internal constructor() {
 
     private var image: (ItemBuilder.(AnvilGuiContext) -> Unit)? = null
     private var clicker: ((AnvilGuiClickContext) -> Unit)? = null

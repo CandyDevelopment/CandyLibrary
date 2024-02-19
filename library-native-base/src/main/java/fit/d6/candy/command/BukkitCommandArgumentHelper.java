@@ -12,6 +12,8 @@ import fit.d6.candy.api.nbt.NbtBase;
 import fit.d6.candy.api.nbt.NbtCompound;
 import fit.d6.candy.api.position.BlockPosition;
 import fit.d6.candy.api.position.Rotation;
+import fit.d6.candy.api.time.Duration;
+import fit.d6.candy.command.brigadier.DurationArgument;
 import fit.d6.candy.nms.NmsAccessor;
 import fit.d6.candy.position.BukkitBlockPosition;
 import net.kyori.adventure.text.Component;
@@ -217,6 +219,11 @@ public class BukkitCommandArgumentHelper implements CommandArgumentHelper {
     @Override
     public @NotNull Rotation getRotation(@NotNull String name) {
         return NmsAccessor.getAccessor().getArgumentRotation(this.commandContext, name);
+    }
+
+    @Override
+    public @NotNull Duration getDuration(@NotNull String name) throws CommandSyntaxException {
+        return DurationArgument.getDuration(this.commandContext, name);
     }
 
 }

@@ -65,6 +65,7 @@ public class CandyLibraryTestPlugin extends JavaPlugin {
         AttributeArgumentTest.register(arguments);
         BlockPositionArgumentTest.register(arguments);
         RotationArgumentTest.register(arguments);
+        DurationArgumentTest.register(arguments);
 
         CommandBuilder services = commandManager.createCommand("services");
 

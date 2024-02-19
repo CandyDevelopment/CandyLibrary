@@ -8,6 +8,7 @@ import fit.d6.candy.api.nbt.NbtBase;
 import fit.d6.candy.api.nbt.NbtCompound;
 import fit.d6.candy.api.position.BlockPosition;
 import fit.d6.candy.api.position.Rotation;
+import fit.d6.candy.api.time.Duration;
 import net.kyori.adventure.text.Component;
 import org.bukkit.GameMode;
 import org.bukkit.Particle;
@@ -55,7 +56,8 @@ public enum ArgumentTypes {
     NBT_COMPOUND(new Class[]{NbtCompound.class}),
     ATTRIBUTE(new Class[]{Attribute.class}),
     BLOCK_POSITION(new Class[]{BlockPosition.class}),
-    ROTATION(new Class[]{Rotation.class});
+    ROTATION(new Class[]{Rotation.class}),
+    DURATION(new Class[]{Duration.class});
 
     private final Class[] classes;
 

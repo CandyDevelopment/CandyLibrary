@@ -35,7 +35,7 @@ public class BukkitNbtCompound extends BukkitNbtBase implements NbtCompound {
         int i = 48;
 
         Map.Entry<String, Tag> entry;
-        for(Iterator<Map.Entry<String, Tag>> var2 = this.tag.tags.entrySet().iterator(); var2.hasNext(); i += BukkitNbtCompound.nmsToCandy(entry.getValue()).getSizeInBytes()) {
+        for (Iterator<Map.Entry<String, Tag>> var2 = this.tag.tags.entrySet().iterator(); var2.hasNext(); i += BukkitNbtCompound.nmsToCandy(entry.getValue()).getSizeInBytes()) {
             entry = var2.next();
             i += 28 + 2 * entry.getKey().length();
             i += 36;

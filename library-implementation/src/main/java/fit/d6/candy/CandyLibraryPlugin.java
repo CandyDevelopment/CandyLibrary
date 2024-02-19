@@ -11,6 +11,7 @@ import fit.d6.candy.api.item.ItemService;
 import fit.d6.candy.api.nbt.NbtService;
 import fit.d6.candy.api.player.PlayerService;
 import fit.d6.candy.api.protocol.ProtocolService;
+import fit.d6.candy.api.time.TimeService;
 import fit.d6.candy.api.visual.VisualService;
 import fit.d6.candy.collection.BukkitCollectionService;
 import fit.d6.candy.command.BukkitCommandService;
@@ -32,6 +33,7 @@ import fit.d6.candy.nms.v1_20_R2.NmsAccessorV1_20_R2;
 import fit.d6.candy.nms.v1_20_R3.NmsAccessorV1_20_R3;
 import fit.d6.candy.player.BukkitPlayerService;
 import fit.d6.candy.protocol.BukkitProtocolService;
+import fit.d6.candy.time.BukkitTimeService;
 import fit.d6.candy.util.Ref;
 import fit.d6.candy.visual.BukkitVisualService;
 import org.bukkit.Bukkit;
@@ -84,6 +86,7 @@ public class CandyLibraryPlugin extends JavaPlugin implements CandyLibrary {
         this.services.put(CollectionService.class, new BukkitCollectionService());
         this.services.put(DatabaseService.class, new BukkitDatabaseService());
         this.services.put(ItemService.class, new BukkitItemService());
+        this.services.put(TimeService.class, new BukkitTimeService());
         this.services.put(NmsAccessor.class, this.accessor);
 
         this.services.values().forEach(service -> {

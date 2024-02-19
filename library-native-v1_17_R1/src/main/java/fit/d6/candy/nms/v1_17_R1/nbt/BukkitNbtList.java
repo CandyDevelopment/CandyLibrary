@@ -35,8 +35,8 @@ public class BukkitNbtList extends BukkitNbtBase implements NbtList {
         int i = b0 + 4 * this.tag.size();
 
         Tag nbtbase;
-        for(Iterator iterator = this.tag.iterator(); iterator.hasNext(); i += BukkitNbtCompound.nmsToCandy(nbtbase).getSizeInBytes()) {
-            nbtbase = (Tag)iterator.next();
+        for (Iterator iterator = this.tag.iterator(); iterator.hasNext(); i += BukkitNbtCompound.nmsToCandy(nbtbase).getSizeInBytes()) {
+            nbtbase = (Tag) iterator.next();
         }
 
         return i;

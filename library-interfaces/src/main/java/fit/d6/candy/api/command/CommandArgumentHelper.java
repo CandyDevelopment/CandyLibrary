@@ -9,6 +9,7 @@ import fit.d6.candy.api.nbt.NbtBase;
 import fit.d6.candy.api.nbt.NbtCompound;
 import fit.d6.candy.api.position.BlockPosition;
 import fit.d6.candy.api.position.Rotation;
+import fit.d6.candy.api.time.Duration;
 import net.kyori.adventure.text.Component;
 import org.bukkit.GameMode;
 import org.bukkit.Particle;
@@ -129,5 +130,8 @@ public interface CommandArgumentHelper {
 
     @NotNull
     Rotation getRotation(@NotNull String name);
+
+    @NotNull
+    Duration getDuration(@NotNull String name) throws CommandSyntaxException;
 
 }
