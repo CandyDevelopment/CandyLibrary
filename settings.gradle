@@ -1,0 +1,19 @@
+plugins {
+    id 'org.gradle.toolchains.foojay-resolver-convention' version '0.5.0'
+}
+rootProject.name = 'library'
+include 'library-interfaces'
+include 'library-test'
+include 'library-implementation'
+include 'library-native-base'
+include 'library-native-v1_20_R3'
+include 'library-native-v1_20_R2'
+include 'library-native-v1_20_R1'
+include 'library-native-v1_19_R3'
+include 'library-native-v1_19_R2'
+include 'library-native-v1_19_R1'
+include 'library-native-v1_18_R1'
+include 'library-native-v1_18_R2'
+include 'library-native-v1_17_R1'
+include 'library-dsl'
+
