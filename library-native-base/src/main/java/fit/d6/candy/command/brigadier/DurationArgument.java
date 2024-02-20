@@ -64,7 +64,7 @@ public class DurationArgument implements ArgumentType<Duration> {
                     break;
                 unit.append(reader.read());
             }
-            if (unit.toString().equalsIgnoreCase("yr")) {
+            if (unit.toString().equalsIgnoreCase("yr") || unit.toString().equalsIgnoreCase("y")) {
                 if (hasYear)
                     throw ERROR_UNIT_DUPLICATED.create();
                 hasYear = true;

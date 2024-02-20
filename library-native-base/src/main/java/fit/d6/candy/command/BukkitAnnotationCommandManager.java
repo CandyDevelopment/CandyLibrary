@@ -348,6 +348,36 @@ public class BukkitAnnotationCommandManager implements AnnotationCommandManager 
             return argument.getUuid(name);
         } else if (annotation.getArgumentType().getType() == ArgumentTypes.VECTOR) {
             return argument.getVector(name);
+        } else if (annotation.getArgumentType().getType() == ArgumentTypes.PARTICLE) {
+            return argument.getParticle(name);
+        } else if (annotation.getArgumentType().getType() == ArgumentTypes.BLOCK) {
+            return argument.getBlock(name);
+        } else if (annotation.getArgumentType().getType() == ArgumentTypes.ITEM) {
+            return argument.getItem(name);
+        } else if (annotation.getArgumentType().getType() == ArgumentTypes.ITEM_PREDICATE) {
+            return argument.getItemPredicate(name);
+        } else if (annotation.getArgumentType().getType() == ArgumentTypes.ENCHANTMENT) {
+            return argument.getEnchantment(name);
+        } else if (annotation.getArgumentType().getType() == ArgumentTypes.ENTITY_TYPE) {
+            return argument.getEntityType(name);
+        } else if (annotation.getArgumentType().getType() == ArgumentTypes.SUMMONABLE_ENTITY_TYPE) {
+            return argument.getSummonableEntityType(name);
+        } else if (annotation.getArgumentType().getType() == ArgumentTypes.POTION_EFFECT_TYPE) {
+            return argument.getPotionEffectType(name);
+        } else if (annotation.getArgumentType().getType() == ArgumentTypes.PLAYER_PROFILES) {
+            return argument.getPlayerProfiles(name);
+        } else if (annotation.getArgumentType().getType() == ArgumentTypes.NBT) {
+            return argument.getNbt(name);
+        } else if (annotation.getArgumentType().getType() == ArgumentTypes.NBT_COMPOUND) {
+            return argument.getNbtCompound(name);
+        } else if (annotation.getArgumentType().getType() == ArgumentTypes.ATTRIBUTE) {
+            return argument.getAttribute(name);
+        } else if (annotation.getArgumentType().getType() == ArgumentTypes.BLOCK_POSITION) {
+            return argument.getBlockPosition(name);
+        } else if (annotation.getArgumentType().getType() == ArgumentTypes.ROTATION) {
+            return argument.getRotation(name);
+        } else if (annotation.getArgumentType().getType() == ArgumentTypes.DURATION) {
+            return argument.getDuration(name);
         }
         throw new IllegalArgumentException("Unsupported argument type");
     }

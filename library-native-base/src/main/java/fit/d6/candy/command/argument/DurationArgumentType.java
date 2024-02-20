@@ -11,7 +11,7 @@ public class DurationArgumentType extends BukkitArgumentType {
 
     @Override
     public ArgumentType<?> toBrigadier() {
-        return StringArgumentType.string();
+        return StringArgumentType.word();
     }
 
     @Override

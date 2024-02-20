@@ -11,6 +11,7 @@ import fit.d6.candy.api.item.ItemService;
 import fit.d6.candy.api.nbt.NbtService;
 import fit.d6.candy.api.player.PlayerService;
 import fit.d6.candy.api.protocol.ProtocolService;
+import fit.d6.candy.api.scheduler.SchedulerService;
 import fit.d6.candy.api.time.TimeService;
 import fit.d6.candy.api.visual.VisualService;
 import fit.d6.candy.collection.BukkitCollectionService;
@@ -33,6 +34,7 @@ import fit.d6.candy.nms.v1_20_R2.NmsAccessorV1_20_R2;
 import fit.d6.candy.nms.v1_20_R3.NmsAccessorV1_20_R3;
 import fit.d6.candy.player.BukkitPlayerService;
 import fit.d6.candy.protocol.BukkitProtocolService;
+import fit.d6.candy.scheduler.BukkitSchedulerService;
 import fit.d6.candy.time.BukkitTimeService;
 import fit.d6.candy.util.Ref;
 import fit.d6.candy.visual.BukkitVisualService;
@@ -48,6 +50,7 @@ public class CandyLibraryPlugin extends JavaPlugin implements CandyLibrary {
     private final Map<Class<?>, Service> services = new HashMap<>();
 
     private boolean isUnsupported = false;
+    private boolean isHigherThan1_20;
 
     private NmsAccessor accessor;
 
@@ -55,24 +58,34 @@ public class CandyLibraryPlugin extends JavaPlugin implements CandyLibrary {
     public void onLoad() {
         if (Ref.getObcVersion().equals("1_20_R3")) {
             this.accessor = new NmsAccessorV1_20_R3();
+            isHigherThan1_20 = true;
         } else if (Ref.getObcVersion().equals("1_20_R2")) {
             this.accessor = new NmsAccessorV1_20_R2();
+            isHigherThan1_20 = true;
         } else if (Ref.getObcVersion().equals("1_20_R1")) {
             this.accessor = new NmsAccessorV1_20_R1();
+            isHigherThan1_20 = true;
         } else if (Ref.getObcVersion().equals("1_19_R3")) {
             this.accessor = new NmsAccessorV1_19_R3();
+            isHigherThan1_20 = false;
         } else if (Ref.getObcVersion().equals("1_19_R2")) {
             this.accessor = new NmsAccessorV1_19_R2();
+            isHigherThan1_20 = false;
         } else if (Ref.getObcVersion().equals("1_19_R1")) {
             this.accessor = new NmsAccessorV1_19_R1();
+            isHigherThan1_20 = false;
         } else if (Ref.getObcVersion().equals("1_18_R2")) {
             this.accessor = new NmsAccessorV1_18_R2();
+            isHigherThan1_20 = false;
         } else if (Ref.getObcVersion().equals("1_18_R1")) {
             this.accessor = new NmsAccessorV1_18_R1();
+            isHigherThan1_20 = false;
         } else if (Ref.getObcVersion().equals("1_17_R1")) {
             this.accessor = new NmsAccessorV1_17_R1();
+            isHigherThan1_20 = false;
         } else {
             isUnsupported = true;
+            isHigherThan1_20 = false;
             return;
         }
 
@@ -87,6 +100,7 @@ public class CandyLibraryPlugin extends JavaPlugin implements CandyLibrary {
         this.services.put(DatabaseService.class, new BukkitDatabaseService());
         this.services.put(ItemService.class, new BukkitItemService());
         this.services.put(TimeService.class, new BukkitTimeService());
+        this.services.put(SchedulerService.class, new BukkitSchedulerService(this.isHigherThan1_20));
         this.services.put(NmsAccessor.class, this.accessor);
 
         this.services.values().forEach(service -> {

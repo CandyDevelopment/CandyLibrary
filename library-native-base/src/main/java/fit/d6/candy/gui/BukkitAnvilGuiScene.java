@@ -7,6 +7,7 @@ import fit.d6.candy.api.gui.anvil.AnvilGuiRenderer;
 import fit.d6.candy.api.gui.anvil.AnvilGuiScene;
 import fit.d6.candy.api.gui.anvil.AnvilSlot;
 import fit.d6.candy.api.gui.slot.Slot;
+import fit.d6.candy.api.scheduler.SchedulerService;
 import fit.d6.candy.exception.GuiException;
 import fit.d6.candy.nms.FakeAnvil;
 import fit.d6.candy.nms.NmsAccessor;
@@ -23,7 +24,6 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
-import org.bukkit.scheduler.BukkitRunnable;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
@@ -150,7 +150,7 @@ public class BukkitAnvilGuiScene extends BukkitGuiScene<AnvilGui, AnvilGuiRender
 
     @EventHandler
     public void click(InventoryClickEvent event) {
-        if (!(event.getWhoClicked() instanceof Player))
+        if (!(event.getWhoClicked() instanceof Player player))
             return;
         if (event.getView() != this.fakeAnvil.getBukkitView())
             return;
@@ -165,14 +165,12 @@ public class BukkitAnvilGuiScene extends BukkitGuiScene<AnvilGui, AnvilGuiRender
             if (itemStack == null)
                 itemStack = ItemStack.empty();
             ItemStack finalItemStack = itemStack;
-            for (MovingItemListener movingItemListener : this.gui.listMovingItemListeners()) {
-                new BukkitRunnable() {
-                    @Override
-                    public void run() {
-                        movingItemListener.moving(context, finalItemStack);
-                    }
-                }.runTaskLater(this.plugin, 1L); // Run task later to prevent the cursor item doesn't be updated
-            }
+            SchedulerService.getService().getScheduler(this.plugin, player)
+                    .runTaskLater(scheduledTask -> {
+                        for (MovingItemListener movingItemListener : this.gui.listMovingItemListeners()) {
+                            movingItemListener.moving(context, finalItemStack);
+                        }
+                    }, 1L); // Run task later to prevent the cursor item doesn't be updated
             return;
         }
         if (clickedInventory != topInventory)
@@ -199,12 +197,10 @@ public class BukkitAnvilGuiScene extends BukkitGuiScene<AnvilGui, AnvilGuiRender
 
         BukkitAnvilGuiClickContext context = new BukkitAnvilGuiClickContext(this.bukkitAudience, this, event.getAction(), event.getClick());
 
-        new BukkitRunnable() {
-            @Override
-            public void run() {
-                slot.getClicker().trigger(context);
-            }
-        }.runTaskLater(this.plugin, 1L); // Run task later to prevent the cursor item doesn't be updated
+        SchedulerService.getService().getScheduler(this.plugin, player)
+                .runTaskLater(scheduledTask -> {
+                    slot.getClicker().trigger(context);
+                }, 1L); // Run task later to prevent the cursor item doesn't be updated
     }
 
     @EventHandler

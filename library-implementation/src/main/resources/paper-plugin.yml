@@ -1,0 +1,10 @@
+main: fit.d6.candy.CandyLibraryPlugin
+name: CandyLibrary
+version: 1.0.0
+api-version: "1.19"
+author: DeeChael
+folia-supported: true
+libraries:
+  - "com.electronwill.night-config:toml:3.6.0"
+  - "com.catppuccin:catppuccin-palette:1.0.0"
+  - "com.zaxxer:HikariCP:5.1.0"

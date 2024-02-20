@@ -1,0 +1,12 @@
+main: fit.d6.candy.test.CandyLibraryTestPlugin
+name: CandyLibraryTest
+version: 1.0.0
+api-version: "1.19"
+author: DeeChael
+folia-supported: true
+dependencies:
+  server:
+    CandyLibrary:
+      load: BEFORE
+      required: true
+      join-classpath: true
