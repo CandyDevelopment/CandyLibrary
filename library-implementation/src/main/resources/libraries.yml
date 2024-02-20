@@ -1,0 +1,4 @@
+libraries:
+  - "com.electronwill.night-config:toml:3.6.0"
+  - "com.catppuccin:catppuccin-palette:1.0.0"
+  - "com.zaxxer:HikariCP:5.1.0"
