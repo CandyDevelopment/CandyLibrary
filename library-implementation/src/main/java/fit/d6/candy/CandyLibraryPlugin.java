@@ -64,7 +64,7 @@ public class CandyLibraryPlugin extends JavaPlugin implements CandyLibrary {
             isHigherThan1_20 = true;
         } else if (Ref.getObcVersion().equals("1_20_R1")) {
             this.accessor = new NmsAccessorV1_20_R1();
-            isHigherThan1_20 = true;
+            isHigherThan1_20 = false;
         } else if (Ref.getObcVersion().equals("1_19_R3")) {
             this.accessor = new NmsAccessorV1_19_R3();
             isHigherThan1_20 = false;

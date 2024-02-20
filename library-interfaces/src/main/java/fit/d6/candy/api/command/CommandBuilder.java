@@ -22,4 +22,14 @@ public interface CommandBuilder extends CommandNode {
     @NotNull
     CommandBuilder redirects(Command redirection);
 
+    @NotNull
+    static CommandBuilder of(@NotNull String name) {
+        return CommandService.getService().getCommandManager().createCommand(name);
+    }
+
+    @NotNull
+    static CommandBuilder of(@NotNull String name, @NotNull ArgumentType argumentType) {
+        return CommandService.getService().getCommandManager().createCommand(name, argumentType);
+    }
+
 }
