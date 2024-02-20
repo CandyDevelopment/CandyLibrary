@@ -49,6 +49,9 @@ public class YamlProvider {
                     path = builder + path;
                 }
 
+                if (!config.contains(path))
+                    continue;
+
                 field.set(configuration, config.get(path));
             }
 

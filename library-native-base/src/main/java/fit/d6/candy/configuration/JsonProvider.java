@@ -48,6 +48,10 @@ public class JsonProvider {
                 Category category = field.getAnnotation(Category.class);
                 if (category != null) {
                     for (String categoryNode : category.value()) {
+                        if (!targetObject.has(categoryNode))
+                            continue;
+                        if (!targetObject.get(categoryNode).isJsonObject())
+                            continue;
                         targetObject = targetObject.getAsJsonObject(categoryNode);
                     }
                 }
