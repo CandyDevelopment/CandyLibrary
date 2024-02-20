@@ -15,7 +15,7 @@ public class VectorArgumentTest {
                         .then(
                                 commandManager.createCommand("value", argumentManager.vector(true))
                                         .executesPlayer((context, argument) -> {
-                                            context.getPlayer().teleport(argument.getVector("value").toLocation(context.getPlayer().getWorld()));
+                                            context.getPlayer().teleportAsync(argument.getVector("value").toLocation(context.getPlayer().getWorld()));
                                             return 1;
                                         })
                         )

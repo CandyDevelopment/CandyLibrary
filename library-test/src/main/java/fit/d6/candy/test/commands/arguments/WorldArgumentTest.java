@@ -16,7 +16,7 @@ public class WorldArgumentTest {
                         .then(
                                 commandManager.createCommand("value", argumentManager.world())
                                         .executesPlayer((context, argument) -> {
-                                            context.getPlayer().teleport(new Location(argument.getWorld("value"), 0, 128, 0));
+                                            context.getPlayer().teleportAsync(new Location(argument.getWorld("value"), 0, 128, 0));
                                             return 1;
                                         })
                         )

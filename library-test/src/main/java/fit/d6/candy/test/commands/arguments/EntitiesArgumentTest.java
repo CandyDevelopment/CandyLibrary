@@ -18,7 +18,7 @@ public class EntitiesArgumentTest {
                                         .executesPlayer((context, argument) -> {
                                             Location location = context.getPlayer().getLocation();
                                             argument.getEntities("value")
-                                                    .forEach(it -> it.teleport(location));
+                                                    .forEach(it -> it.teleportAsync(location));
                                             return 1;
                                         })
                         )
