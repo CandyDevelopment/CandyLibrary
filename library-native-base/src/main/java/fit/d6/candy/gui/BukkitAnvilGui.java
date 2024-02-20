@@ -54,7 +54,7 @@ public class BukkitAnvilGui extends BukkitGui implements AnvilGui {
     }
 
     @Override
-    public @NotNull AnvilGuiRenderer prepare(GuiAudience audience) {
+    public @NotNull AnvilGuiRenderer prepare(@NotNull GuiAudience audience) {
         return new BukkitAnvilGuiRenderer(this.plugin, this, this.initialization, this.defaultTitle, audience, null);
     }
 

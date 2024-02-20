@@ -43,4 +43,9 @@ public interface CommandManager {
     @NotNull
     Command register(@NotNull String prefix, @NotNull CommandBuilder builder, @NotNull CommandOptions options);
 
+    @NotNull
+    static CommandManager getManager() {
+        return CommandService.getService().getCommandManager();
+    }
+
 }

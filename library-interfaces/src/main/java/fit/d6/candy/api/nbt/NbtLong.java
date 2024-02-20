@@ -8,4 +8,9 @@ public interface NbtLong extends NbtNumber {
     @NotNull
     NbtLong copy();
 
+    @NotNull
+    static NbtLong of(long value) {
+        return NbtService.getService().longNbt(value);
+    }
+
 }

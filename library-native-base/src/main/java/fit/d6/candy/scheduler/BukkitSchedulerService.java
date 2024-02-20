@@ -7,7 +7,7 @@ import fit.d6.candy.exception.SchedulerException;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.World;
-import org.bukkit.entity.Player;
+import org.bukkit.entity.Entity;
 import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
 
@@ -52,8 +52,8 @@ public class BukkitSchedulerService extends BukkitService implements SchedulerSe
     }
 
     @Override
-    public @NotNull Scheduler getScheduler(@NotNull Plugin plugin, @NotNull Player player) {
-        return isHigherThan1_20 ? new FoliaScheduler(plugin, player) : new BukkitScheduler(plugin);
+    public @NotNull Scheduler getScheduler(@NotNull Plugin plugin, @NotNull Entity entity) {
+        return isHigherThan1_20 ? new FoliaScheduler(plugin, entity) : new BukkitScheduler(plugin);
     }
 
 }

@@ -8,4 +8,9 @@ public interface NbtDouble extends NbtNumber {
     @NotNull
     NbtDouble copy();
 
+    @NotNull
+    static NbtDouble of(double value) {
+        return NbtService.getService().doubleNbt(value);
+    }
+
 }

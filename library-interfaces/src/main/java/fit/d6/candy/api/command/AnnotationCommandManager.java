@@ -10,4 +10,9 @@ public interface AnnotationCommandManager {
     @NotNull
     Command register(@NotNull String prefix, @NotNull Object command);
 
+    @NotNull
+    static AnnotationCommandManager getManager() {
+        return CommandService.getService().getAnnotationCommandManager();
+    }
+
 }

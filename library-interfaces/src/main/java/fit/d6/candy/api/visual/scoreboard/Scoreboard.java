@@ -43,4 +43,9 @@ public interface Scoreboard {
     @NotNull
     List<@NotNull ScoreContent> listContents();
 
+    @NotNull
+    static Scoreboard of(@NotNull String name) {
+        return ScoreboardManager.getManager().createScoreboard(name);
+    }
+
 }

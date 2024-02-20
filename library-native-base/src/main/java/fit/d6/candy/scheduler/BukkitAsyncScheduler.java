@@ -19,6 +19,11 @@ public class BukkitAsyncScheduler implements Scheduler {
     }
 
     @Override
+    public boolean isAsync() {
+        return true;
+    }
+
+    @Override
     public @NotNull Plugin getPlugin() {
         return this.plugin;
     }

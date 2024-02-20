@@ -8,4 +8,9 @@ public interface NbtByte extends NbtNumber {
     @NotNull
     NbtByte copy();
 
+    @NotNull
+    static NbtByte of(byte value) {
+        return NbtService.getService().byteNbt(value);
+    }
+
 }

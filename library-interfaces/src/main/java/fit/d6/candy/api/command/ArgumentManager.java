@@ -130,4 +130,9 @@ public interface ArgumentManager {
     @NotNull
     ArgumentType duration();
 
+    @NotNull
+    static ArgumentManager getManager() {
+        return CommandService.getService().getArgumentManager();
+    }
+
 }

@@ -10,4 +10,9 @@ public interface NbtString extends NbtBase {
     @NotNull
     NbtString copy();
 
+    @NotNull
+    static NbtString of(@NotNull String value) {
+        return NbtService.getService().stringNbt(value);
+    }
+
 }

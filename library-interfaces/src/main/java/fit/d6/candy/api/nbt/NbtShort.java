@@ -8,4 +8,9 @@ public interface NbtShort extends NbtNumber {
     @NotNull
     NbtShort copy();
 
+    @NotNull
+    static NbtShort of(short value) {
+        return NbtService.getService().shortNbt(value);
+    }
+
 }

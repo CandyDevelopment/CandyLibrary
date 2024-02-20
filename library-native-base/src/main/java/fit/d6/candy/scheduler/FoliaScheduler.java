@@ -4,7 +4,7 @@ import fit.d6.candy.api.annotation.FoliaOnly;
 import fit.d6.candy.api.scheduler.ScheduledTask;
 import fit.d6.candy.api.scheduler.Scheduler;
 import io.papermc.paper.threadedregions.scheduler.EntityScheduler;
-import org.bukkit.entity.Player;
+import org.bukkit.entity.Entity;
 import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
 
@@ -16,9 +16,14 @@ public class FoliaScheduler implements Scheduler {
     private final Plugin plugin;
     private final EntityScheduler scheduler;
 
-    public FoliaScheduler(Plugin plugin, Player player) {
+    public FoliaScheduler(Plugin plugin, Entity entity) {
         this.plugin = plugin;
-        this.scheduler = player.getScheduler();
+        this.scheduler = entity.getScheduler();
+    }
+
+    @Override
+    public boolean isAsync() {
+        return false;
     }
 
     @Override

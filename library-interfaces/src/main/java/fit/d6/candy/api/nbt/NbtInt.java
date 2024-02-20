@@ -8,4 +8,9 @@ public interface NbtInt extends NbtNumber {
     @NotNull
     NbtInt copy();
 
+    @NotNull
+    static NbtInt of(int value) {
+        return NbtService.getService().intNbt(value);
+    }
+
 }

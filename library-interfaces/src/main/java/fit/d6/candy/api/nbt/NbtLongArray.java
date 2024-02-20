@@ -3,6 +3,8 @@ package fit.d6.candy.api.nbt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 public interface NbtLongArray extends NbtBase {
 
     @Nullable
@@ -22,5 +24,15 @@ public interface NbtLongArray extends NbtBase {
     long[] getAsLongArray();
 
     void clear();
+
+    @NotNull
+    static NbtLongArray of(long @NotNull [] longs) {
+        return NbtService.getService().longArrayNbt(longs);
+    }
+
+    @NotNull
+    static NbtLongArray of(@NotNull List<@NotNull Long> longs) {
+        return NbtService.getService().longArrayNbt(longs);
+    }
 
 }

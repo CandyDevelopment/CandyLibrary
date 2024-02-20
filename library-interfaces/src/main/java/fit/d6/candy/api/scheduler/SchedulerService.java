@@ -6,7 +6,7 @@ import fit.d6.candy.api.annotation.FoliaOnly;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.World;
-import org.bukkit.entity.Player;
+import org.bukkit.entity.Entity;
 import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,7 +31,7 @@ public interface SchedulerService extends Service {
     Scheduler getAsyncScheduler(@NotNull Plugin plugin);
 
     @NotNull
-    Scheduler getScheduler(@NotNull Plugin plugin, @NotNull Player player);
+    Scheduler getScheduler(@NotNull Plugin plugin, @NotNull Entity entity);
 
     @NotNull
     static SchedulerService getService() {

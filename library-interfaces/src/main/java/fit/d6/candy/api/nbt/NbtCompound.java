@@ -102,4 +102,9 @@ public interface NbtCompound extends NbtBase {
     @NotNull
     NbtCompound merge(@NotNull NbtCompound source);
 
+    @NotNull
+    static NbtCompound of() {
+        return NbtService.getService().compoundNbt();
+    }
+
 }

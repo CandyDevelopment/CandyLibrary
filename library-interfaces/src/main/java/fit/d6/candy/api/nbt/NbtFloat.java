@@ -8,4 +8,9 @@ public interface NbtFloat extends NbtNumber {
     @NotNull
     NbtFloat copy();
 
+    @NotNull
+    static NbtFloat of(float value) {
+        return NbtService.getService().floatNbt(value);
+    }
+
 }

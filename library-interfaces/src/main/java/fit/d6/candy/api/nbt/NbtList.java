@@ -51,4 +51,9 @@ public interface NbtList extends NbtBase {
     @NotNull
     NbtList copy();
 
+    @NotNull
+    static NbtList of() {
+        return NbtService.getService().listNbt();
+    }
+
 }

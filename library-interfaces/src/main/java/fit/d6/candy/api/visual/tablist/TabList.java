@@ -1,5 +1,6 @@
 package fit.d6.candy.api.visual.tablist;
 
+import fit.d6.candy.api.visual.VisualService;
 import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.NotNull;
 
@@ -24,6 +25,12 @@ public interface TabList {
 
     boolean shouldSendActualPlayers();
 
+    @NotNull
     TabList shouldSendActualPlayers(boolean ifShould);
+
+    @NotNull
+    static TabList of() {
+        return VisualService.getService().getTabListManager().createTabList();
+    }
 
 }

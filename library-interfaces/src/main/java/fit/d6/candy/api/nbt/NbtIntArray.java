@@ -3,6 +3,8 @@ package fit.d6.candy.api.nbt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 public interface NbtIntArray extends NbtBase {
 
     @Nullable
@@ -22,5 +24,15 @@ public interface NbtIntArray extends NbtBase {
     int[] getAsIntArray();
 
     void clear();
+
+    @NotNull
+    static NbtIntArray of(int @NotNull [] ints) {
+        return NbtService.getService().intArrayNbt(ints);
+    }
+
+    @NotNull
+    static NbtIntArray of(@NotNull List<@NotNull Integer> ints) {
+        return NbtService.getService().intArrayNbt(ints);
+    }
 
 }

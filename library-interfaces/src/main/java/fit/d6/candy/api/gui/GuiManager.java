@@ -14,5 +14,10 @@ public interface GuiManager {
     @NotNull
     GuiType<AnvilGui, AnvilGuiInitializer> anvil();
 
+    @NotNull
+    static GuiManager getManager() {
+        return GuiService.getService().getGuiManager();
+    }
+
 
 }

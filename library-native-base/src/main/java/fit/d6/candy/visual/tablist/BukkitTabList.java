@@ -55,7 +55,7 @@ public class BukkitTabList implements TabList {
     }
 
     @Override
-    public TabList shouldSendActualPlayers(boolean ifShould) {
+    public @NotNull TabList shouldSendActualPlayers(boolean ifShould) {
         this.shouldSendActualPlayers = ifShould;
         return this;
     }
