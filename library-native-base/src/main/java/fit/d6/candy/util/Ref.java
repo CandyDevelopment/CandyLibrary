@@ -8,6 +8,15 @@ public final class Ref {
         return Bukkit.getServer().getClass().getPackage().getName().split("\\.")[3].substring(1);
     }
 
+    public static boolean isFolia() {
+        try {
+            Class.forName("io.papermc.paper.threadedregions.RegionizedServer");
+            return true;
+        } catch (ClassNotFoundException e) {
+            return false;
+        }
+    }
+
     private Ref() {
     }
 

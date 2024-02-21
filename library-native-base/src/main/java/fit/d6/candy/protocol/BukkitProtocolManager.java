@@ -75,7 +75,9 @@ public class BukkitProtocolManager implements ProtocolManager {
         }
 
         if (pkt != null) {
-            for (List<PacketListener> listeners : this.packedListeners.get(PacketType.CLIENTBOUND_PLAYER_CHAT).values()) {
+            if (!this.packedListeners.containsKey(pkt.getType()))
+                return packet;
+            for (List<PacketListener> listeners : this.packedListeners.get(pkt.getType()).values()) {
                 for (PacketListener listener : listeners) {
                     try {
                         listener.resolve(player, pkt);
