@@ -23,6 +23,10 @@ public final class StringUtils {
         return UUID.fromString(uuid.substring(0, 8) + "-" + uuid.substring(8, 12) + "-" + uuid.substring(12, 16) + "-" + uuid.substring(16, 20) + "-" + uuid.substring(20, 32));
     }
 
+    public static int count(String string, String what) {
+        return (string.length() - string.replace(what, "").length()) / what.length();
+    }
+
     private StringUtils() {
     }
 

@@ -1,7 +1,9 @@
 package fit.d6.candy.api.command;
 
+import fit.d6.candy.api.annotation.FoliaSupport;
 import org.jetbrains.annotations.NotNull;
 
+@FoliaSupport
 public interface AnnotationCommandManager {
 
     @NotNull

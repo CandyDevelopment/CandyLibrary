@@ -2,9 +2,11 @@ package fit.d6.candy.api.gui;
 
 import fit.d6.candy.api.CandyLibrary;
 import fit.d6.candy.api.Service;
+import fit.d6.candy.api.annotation.FoliaSupport;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
+@FoliaSupport
 public interface GuiService extends Service {
 
     @NotNull

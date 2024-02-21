@@ -1,9 +1,11 @@
 package fit.d6.candy.api.visual.tablist;
 
+import fit.d6.candy.api.annotation.FoliaSupport;
 import fit.d6.candy.api.visual.VisualService;
 import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.NotNull;
 
+@FoliaSupport
 public interface TabListManager {
 
     @NotNull

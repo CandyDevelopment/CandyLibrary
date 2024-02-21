@@ -56,37 +56,43 @@ public class CandyLibraryPlugin extends JavaPlugin implements CandyLibrary {
 
     @Override
     public void onLoad() {
-        if (Ref.getObcVersion().equals("1_20_R3")) {
-            this.accessor = new NmsAccessorV1_20_R3();
-            isHigherThan1_20 = true;
-        } else if (Ref.getObcVersion().equals("1_20_R2")) {
-            this.accessor = new NmsAccessorV1_20_R2();
-            isHigherThan1_20 = true;
-        } else if (Ref.getObcVersion().equals("1_20_R1")) {
-            this.accessor = new NmsAccessorV1_20_R1();
-            isHigherThan1_20 = false;
-        } else if (Ref.getObcVersion().equals("1_19_R3")) {
-            this.accessor = new NmsAccessorV1_19_R3();
-            isHigherThan1_20 = false;
-        } else if (Ref.getObcVersion().equals("1_19_R2")) {
-            this.accessor = new NmsAccessorV1_19_R2();
-            isHigherThan1_20 = false;
-        } else if (Ref.getObcVersion().equals("1_19_R1")) {
-            this.accessor = new NmsAccessorV1_19_R1();
-            isHigherThan1_20 = false;
-        } else if (Ref.getObcVersion().equals("1_18_R2")) {
-            this.accessor = new NmsAccessorV1_18_R2();
-            isHigherThan1_20 = false;
-        } else if (Ref.getObcVersion().equals("1_18_R1")) {
-            this.accessor = new NmsAccessorV1_18_R1();
-            isHigherThan1_20 = false;
-        } else if (Ref.getObcVersion().equals("1_17_R1")) {
-            this.accessor = new NmsAccessorV1_17_R1();
-            isHigherThan1_20 = false;
+        String version = Bukkit.getBukkitVersion();
+        version = version.split("-")[0].split("\\.")[1];
+        if (Integer.parseInt(version) >= 21) { // For 1.21+ paper removed craft bukkit relocation
+
         } else {
-            isUnsupported = true;
-            isHigherThan1_20 = false;
-            return;
+            if (Ref.getObcVersion().equals("1_20_R3")) {
+                this.accessor = new NmsAccessorV1_20_R3();
+                isHigherThan1_20 = true;
+            } else if (Ref.getObcVersion().equals("1_20_R2")) {
+                this.accessor = new NmsAccessorV1_20_R2();
+                isHigherThan1_20 = true;
+            } else if (Ref.getObcVersion().equals("1_20_R1")) {
+                this.accessor = new NmsAccessorV1_20_R1();
+                isHigherThan1_20 = false;
+            } else if (Ref.getObcVersion().equals("1_19_R3")) {
+                this.accessor = new NmsAccessorV1_19_R3();
+                isHigherThan1_20 = false;
+            } else if (Ref.getObcVersion().equals("1_19_R2")) {
+                this.accessor = new NmsAccessorV1_19_R2();
+                isHigherThan1_20 = false;
+            } else if (Ref.getObcVersion().equals("1_19_R1")) {
+                this.accessor = new NmsAccessorV1_19_R1();
+                isHigherThan1_20 = false;
+            } else if (Ref.getObcVersion().equals("1_18_R2")) {
+                this.accessor = new NmsAccessorV1_18_R2();
+                isHigherThan1_20 = false;
+            } else if (Ref.getObcVersion().equals("1_18_R1")) {
+                this.accessor = new NmsAccessorV1_18_R1();
+                isHigherThan1_20 = false;
+            } else if (Ref.getObcVersion().equals("1_17_R1")) {
+                this.accessor = new NmsAccessorV1_17_R1();
+                isHigherThan1_20 = false;
+            } else {
+                isUnsupported = true;
+                isHigherThan1_20 = false;
+                return;
+            }
         }
 
         this.services.put(GuiService.class, new BukkitGuiService());

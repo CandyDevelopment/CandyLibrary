@@ -1,5 +1,6 @@
 package fit.d6.candy.api.player;
 
+import fit.d6.candy.api.annotation.FoliaSupport;
 import fit.d6.candy.api.protocol.packet.Packet;
 import fit.d6.candy.api.visual.scoreboard.Scoreboard;
 import fit.d6.candy.api.visual.tablist.TabList;
@@ -7,6 +8,7 @@ import fit.d6.candy.api.visual.tablist.TabListContent;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
+@FoliaSupport
 public interface PlayerManager {
 
     void sendPacket(@NotNull Player player, @NotNull Packet packet);

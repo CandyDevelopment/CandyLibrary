@@ -3,10 +3,12 @@ package fit.d6.candy.api.nbt;
 import com.google.gson.JsonObject;
 import fit.d6.candy.api.CandyLibrary;
 import fit.d6.candy.api.Service;
+import fit.d6.candy.api.annotation.FoliaSupport;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+@FoliaSupport
 public interface NbtService extends Service {
 
     @NotNull
