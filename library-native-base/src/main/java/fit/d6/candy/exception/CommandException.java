@@ -6,4 +6,8 @@ public class CommandException extends RuntimeException {
         super(message);
     }
 
+    public CommandException(Throwable e) {
+        super(e);
+    }
+
 }

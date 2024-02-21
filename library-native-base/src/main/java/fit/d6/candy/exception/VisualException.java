@@ -6,4 +6,8 @@ public class VisualException extends RuntimeException {
         super(message);
     }
 
+    public VisualException(Throwable e) {
+        super(e);
+    }
+
 }

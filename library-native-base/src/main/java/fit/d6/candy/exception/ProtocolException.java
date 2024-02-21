@@ -6,4 +6,8 @@ public class ProtocolException extends RuntimeException {
         super(message);
     }
 
+    public ProtocolException(Throwable e) {
+        super(e);
+    }
+
 }

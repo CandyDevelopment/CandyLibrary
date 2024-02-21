@@ -6,4 +6,8 @@ public class TimeException extends RuntimeException {
         super(message);
     }
 
+    public TimeException(Throwable e) {
+        super(e);
+    }
+
 }

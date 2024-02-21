@@ -30,10 +30,7 @@ import fit.d6.candy.visual.scoreboard.BukkitScore;
 import fit.d6.candy.visual.scoreboard.BukkitScoreContent;
 import io.netty.channel.Channel;
 import net.kyori.adventure.text.Component;
-import org.bukkit.GameMode;
-import org.bukkit.Location;
-import org.bukkit.Particle;
-import org.bukkit.World;
+import org.bukkit.*;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.command.CommandSender;
 import org.bukkit.enchantments.Enchantment;
@@ -322,6 +319,10 @@ public interface NmsAccessor extends Service {
     ArgumentType<?> argumentRotation();
 
     Rotation getArgumentRotation(Object context, String name);
+
+    default World createWorld(WorldCreator creator) {
+        return creator.createWorld();
+    }
 
     static NmsAccessor getAccessor() {
         return CandyLibrary.getLibrary().getService(NmsAccessor.class);

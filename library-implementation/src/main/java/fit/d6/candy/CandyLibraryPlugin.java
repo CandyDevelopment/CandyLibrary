@@ -14,6 +14,7 @@ import fit.d6.candy.api.protocol.ProtocolService;
 import fit.d6.candy.api.scheduler.SchedulerService;
 import fit.d6.candy.api.time.TimeService;
 import fit.d6.candy.api.visual.VisualService;
+import fit.d6.candy.api.world.WorldService;
 import fit.d6.candy.collection.BukkitCollectionService;
 import fit.d6.candy.command.BukkitCommandService;
 import fit.d6.candy.configuration.BukkitConfigurationService;
@@ -38,6 +39,7 @@ import fit.d6.candy.scheduler.BukkitSchedulerService;
 import fit.d6.candy.time.BukkitTimeService;
 import fit.d6.candy.util.Ref;
 import fit.d6.candy.visual.BukkitVisualService;
+import fit.d6.candy.world.BukkitWorldService;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
@@ -107,6 +109,7 @@ public class CandyLibraryPlugin extends JavaPlugin implements CandyLibrary {
         this.services.put(ItemService.class, new BukkitItemService());
         this.services.put(TimeService.class, new BukkitTimeService());
         this.services.put(SchedulerService.class, new BukkitSchedulerService(this.isHigherThan1_20));
+        this.services.put(WorldService.class, new BukkitWorldService());
         this.services.put(NmsAccessor.class, this.accessor);
 
         this.services.values().forEach(service -> {

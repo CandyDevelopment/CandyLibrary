@@ -6,4 +6,8 @@ public class GuiException extends RuntimeException {
         super(message);
     }
 
+    public GuiException(Throwable e) {
+        super(e);
+    }
+
 }

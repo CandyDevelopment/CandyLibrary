@@ -6,4 +6,8 @@ public class PlayerException extends RuntimeException {
         super(message);
     }
 
+    public PlayerException(Throwable e) {
+        super(e);
+    }
+
 }

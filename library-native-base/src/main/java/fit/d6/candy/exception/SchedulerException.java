@@ -6,4 +6,8 @@ public class SchedulerException extends RuntimeException {
         super(message);
     }
 
+    public SchedulerException(Throwable e) {
+        super(e);
+    }
+
 }

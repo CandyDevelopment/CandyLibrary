@@ -6,4 +6,8 @@ public class ConfigurationException extends RuntimeException {
         super(message);
     }
 
+    public ConfigurationException(Throwable e) {
+        super(e);
+    }
+
 }

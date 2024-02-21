@@ -9,17 +9,22 @@ import fit.d6.candy.api.configuration.ConfigurationType;
 import fit.d6.candy.api.protocol.ProtocolService;
 import fit.d6.candy.api.protocol.packet.ClientboundPlayerChatPacket;
 import fit.d6.candy.api.protocol.packet.PacketType;
+import fit.d6.candy.api.world.WorldManager;
 import fit.d6.candy.test.commands.arguments.*;
 import fit.d6.candy.test.services.GuiServiceTest;
 import fit.d6.candy.test.services.ScoreboardServiceTest;
 import fit.d6.candy.test.services.TabListServiceTest;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
+import org.bukkit.World;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class CandyLibraryTestPlugin extends JavaPlugin {
+
+    public final static AtomicReference<World> WORLD = new AtomicReference<>(null);
 
     @Override
     public void onEnable() {
@@ -128,6 +133,33 @@ public class CandyLibraryTestPlugin extends JavaPlugin {
                     ClientboundPlayerChatPacket clientboundPlayerChatPacket = (ClientboundPlayerChatPacket) packet;
                     clientboundPlayerChatPacket.setContent(Component.text("You can never send out your message, hahaha").color(NamedTextColor.GOLD));
                 }));
+
+        System.out.println("Is Folia? " + Ref.isFolia());
+
+        // Actually, if you want to connect these worlds, you should register a listener to listen player use portal event and handle it by yourself
+
+        WorldManager.getManager().create("test_world")
+                .initialize(this, world -> {
+                    WORLD.set(world.asBukkit());
+                    WORLD.get().setAutoSave(true);
+                    WORLD.get().setSpawnLocation(0, 100, 0);
+                });
+
+        WorldManager.getManager().create("test_world_nether")
+                .environment(World.Environment.NETHER)
+                .initialize(this, world -> {
+                    World bukkitWorld = world.asBukkit();
+                    bukkitWorld.setAutoSave(true);
+                    bukkitWorld.setSpawnLocation(0, 100, 0);
+                });
+
+        WorldManager.getManager().create("test_world_the_end")
+                .environment(World.Environment.THE_END)
+                .initialize(this, world -> {
+                    World bukkitWorld = world.asBukkit();
+                    bukkitWorld.setAutoSave(true);
+                    bukkitWorld.setSpawnLocation(0, 100, 0);
+                });
     }
 
     public static CandyLibraryTestPlugin getInstance() {

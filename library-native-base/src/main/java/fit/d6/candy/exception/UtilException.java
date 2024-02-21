@@ -6,4 +6,8 @@ public class UtilException extends RuntimeException {
         super(message);
     }
 
+    public UtilException(Throwable e) {
+        super(e);
+    }
+
 }

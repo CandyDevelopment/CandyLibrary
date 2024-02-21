@@ -2,6 +2,7 @@ package fit.d6.candy.nms.v1_20_R1;
 
 import com.destroystokyo.paper.profile.CraftPlayerProfile;
 import com.destroystokyo.paper.profile.PlayerProfile;
+import com.google.common.collect.ImmutableList;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.mojang.authlib.GameProfile;
@@ -15,6 +16,9 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.mojang.brigadier.tree.CommandNode;
+import com.mojang.datafixers.util.Pair;
+import com.mojang.serialization.DynamicOps;
+import com.mojang.serialization.Lifecycle;
 import fit.d6.candy.api.gui.anvil.AnvilGuiScene;
 import fit.d6.candy.api.item.BlockInput;
 import fit.d6.candy.api.item.ItemInput;
@@ -30,6 +34,7 @@ import fit.d6.candy.api.visual.tablist.TabListContent;
 import fit.d6.candy.exception.CommandException;
 import fit.d6.candy.exception.PlayerException;
 import fit.d6.candy.exception.ProtocolException;
+import fit.d6.candy.exception.WorldException;
 import fit.d6.candy.gui.BukkitAnvilGuiScene;
 import fit.d6.candy.nms.FakeAnvil;
 import fit.d6.candy.nms.NmsAccessor;
@@ -61,19 +66,42 @@ import net.minecraft.commands.arguments.item.ItemArgument;
 import net.minecraft.commands.arguments.item.ItemPredicateArgument;
 import net.minecraft.commands.synchronization.SuggestionProviders;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.nbt.Tag;
 import net.minecraft.nbt.*;
 import net.minecraft.network.Connection;
 import net.minecraft.network.chat.SignedMessageBody;
 import net.minecraft.network.protocol.game.*;
 import net.minecraft.network.protocol.login.ClientboundGameProfilePacket;
+import net.minecraft.resources.RegistryOps;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.ReloadableServerResources;
 import net.minecraft.server.ServerScoreboard;
+import net.minecraft.server.WorldLoader;
+import net.minecraft.server.dedicated.DedicatedServer;
+import net.minecraft.server.dedicated.DedicatedServerProperties;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.level.TicketType;
+import net.minecraft.util.GsonHelper;
+import net.minecraft.util.datafix.DataFixers;
+import net.minecraft.world.Difficulty;
+import net.minecraft.world.entity.ai.village.VillageSiege;
+import net.minecraft.world.entity.npc.CatSpawner;
+import net.minecraft.world.entity.npc.WanderingTraderSpawner;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.GameType;
+import net.minecraft.world.level.*;
+import net.minecraft.world.level.biome.BiomeManager;
+import net.minecraft.world.level.dimension.LevelStem;
+import net.minecraft.world.level.levelgen.PatrolSpawner;
+import net.minecraft.world.level.levelgen.PhantomSpawner;
+import net.minecraft.world.level.levelgen.WorldDimensions;
+import net.minecraft.world.level.levelgen.WorldOptions;
+import net.minecraft.world.level.storage.LevelStorageSource;
+import net.minecraft.world.level.storage.PrimaryLevelData;
+import net.minecraft.world.level.storage.WorldData;
 import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.scores.Objective;
@@ -85,10 +113,12 @@ import org.bukkit.*;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.command.CommandSender;
 import org.bukkit.craftbukkit.v1_20_R1.CraftParticle;
+import org.bukkit.craftbukkit.v1_20_R1.CraftServer;
 import org.bukkit.craftbukkit.v1_20_R1.CraftWorld;
 import org.bukkit.craftbukkit.v1_20_R1.command.VanillaCommandWrapper;
 import org.bukkit.craftbukkit.v1_20_R1.entity.CraftPlayer;
 import org.bukkit.craftbukkit.v1_20_R1.event.CraftEventFactory;
+import org.bukkit.craftbukkit.v1_20_R1.generator.CraftWorldInfo;
 import org.bukkit.craftbukkit.v1_20_R1.inventory.CraftContainer;
 import org.bukkit.craftbukkit.v1_20_R1.inventory.CraftItemStack;
 import org.bukkit.craftbukkit.v1_20_R1.potion.CraftPotionEffectType;
@@ -99,6 +129,10 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryCloseEvent;
+import org.bukkit.event.world.WorldLoadEvent;
+import org.bukkit.generator.BiomeProvider;
+import org.bukkit.generator.ChunkGenerator;
+import org.bukkit.generator.WorldInfo;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scoreboard.DisplaySlot;
@@ -106,6 +140,8 @@ import org.bukkit.util.Vector;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 
+import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -589,7 +625,12 @@ public class NmsAccessorV1_20_R1 implements NmsAccessor {
                     PaperAdventure.asVanilla(content.getText()),
                     null));
         }
-        ClientboundPlayerInfoUpdatePacket packet = new ClientboundPlayerInfoUpdatePacket(EnumSet.of(ClientboundPlayerInfoUpdatePacket.Action.ADD_PLAYER, ClientboundPlayerInfoUpdatePacket.Action.UPDATE_LISTED, ClientboundPlayerInfoUpdatePacket.Action.UPDATE_DISPLAY_NAME, ClientboundPlayerInfoUpdatePacket.Action.UPDATE_LATENCY), new ArrayList<>());
+        EnumSet<ClientboundPlayerInfoUpdatePacket.Action> actions = EnumSet.of(
+                ClientboundPlayerInfoUpdatePacket.Action.ADD_PLAYER,
+                ClientboundPlayerInfoUpdatePacket.Action.UPDATE_LISTED,
+                ClientboundPlayerInfoUpdatePacket.Action.UPDATE_DISPLAY_NAME,
+                ClientboundPlayerInfoUpdatePacket.Action.UPDATE_LATENCY);
+        ClientboundPlayerInfoUpdatePacket packet = new ClientboundPlayerInfoUpdatePacket(actions, new ArrayList<ClientboundPlayerInfoUpdatePacket.Entry>());
         for (Field field : ClientboundPlayerInfoUpdatePacket.class.getDeclaredFields()) {
             if (field.getType() != List.class)
                 continue;
@@ -926,6 +967,135 @@ public class NmsAccessorV1_20_R1 implements NmsAccessor {
     public Rotation getArgumentRotation(Object context, String name) {
         Vec2 vec2 = RotationArgument.getRotation(((CommandContext<CommandSourceStack>) context), name).getRotation(((CommandContext<CommandSourceStack>) context).getSource());
         return new BukkitRotation(vec2.y, vec2.x);
+    }
+
+    @Override
+    public World createWorld(WorldCreator creator) {
+        io.papermc.paper.threadedregions.RegionizedServer.ensureGlobalTickThread("World create can be done only on global tick thread");
+        CraftServer craftServer = (CraftServer) Bukkit.getServer();
+        DedicatedServer console = craftServer.getServer();
+
+        String name = creator.name();
+
+        String levelName = console.getProperties().levelName;
+        if (name.equals(levelName)
+                || (console.isNetherEnabled() && name.equals(levelName + "_nether"))
+                || (craftServer.getAllowEnd() && name.equals(levelName + "_the_end"))
+        ) {
+            return Bukkit.getWorld(name);
+        }
+
+        ChunkGenerator generator = creator.generator();
+        BiomeProvider biomeProvider = creator.biomeProvider();
+        File folder = new File(craftServer.getWorldContainer(), name);
+        org.bukkit.World world = craftServer.getWorld(name);
+
+        CraftWorld worldByKey = (CraftWorld) craftServer.getWorld(creator.key());
+        if (world != null || worldByKey != null) {
+            if (world != worldByKey) {
+                throw new WorldException("World duplicated");
+            }
+        }
+
+        if ((folder.exists()) && (!folder.isDirectory())) {
+            throw new WorldException("Invalid world folder");
+        }
+
+        if (generator == null) {
+            generator = craftServer.getGenerator(name);
+        }
+
+        if (biomeProvider == null) {
+            biomeProvider = craftServer.getBiomeProvider(name);
+        }
+
+        ResourceKey<LevelStem> actualDimension = switch (creator.environment()) {
+            case NORMAL -> LevelStem.OVERWORLD;
+            case NETHER -> LevelStem.NETHER;
+            case THE_END -> LevelStem.END;
+            default -> throw new WorldException("Illegal dimension");
+        };
+
+        LevelStorageSource.LevelStorageAccess worldSession;
+        try {
+            worldSession = LevelStorageSource.createDefault(craftServer.getWorldContainer().toPath()).createAccess(name, actualDimension);
+        } catch (IOException ex) {
+            throw new WorldException(ex);
+        }
+
+        boolean hardcore = creator.hardcore();
+
+        PrimaryLevelData worlddata;
+        WorldLoader.DataLoadContext worldloader_a = console.worldLoader;
+        net.minecraft.core.Registry<LevelStem> iregistry = worldloader_a.datapackDimensions().registryOrThrow(Registries.LEVEL_STEM);
+        DynamicOps<Tag> dynamicops = RegistryOps.create(NbtOps.INSTANCE, worldloader_a.datapackWorldgen());
+        Pair<WorldData, WorldDimensions.Complete> pair = worldSession.getDataTag(dynamicops, worldloader_a.dataConfiguration(), iregistry, worldloader_a.datapackWorldgen().allRegistriesLifecycle());
+
+
+        if (pair != null) {
+            worlddata = (PrimaryLevelData) pair.getFirst();
+            iregistry = pair.getSecond().dimensions();
+        } else {
+            LevelSettings worldsettings;
+            WorldOptions worldoptions = new WorldOptions(creator.seed(), creator.generateStructures(), false);
+            WorldDimensions worlddimensions;
+
+            DedicatedServerProperties.WorldDimensionData properties = new DedicatedServerProperties.WorldDimensionData(GsonHelper.parse((creator.generatorSettings().isEmpty()) ? "{}" : creator.generatorSettings()), creator.type().name().toLowerCase(Locale.ROOT));
+
+            worldsettings = new LevelSettings(name, GameType.SURVIVAL, hardcore, Difficulty.EASY, false, new GameRules(), worldloader_a.dataConfiguration());
+            worlddimensions = properties.create(worldloader_a.datapackWorldgen());
+
+            WorldDimensions.Complete worlddimensions_b = worlddimensions.bake(iregistry);
+            Lifecycle lifecycle = worlddimensions_b.lifecycle().add(worldloader_a.datapackWorldgen().allRegistriesLifecycle());
+
+            worlddata = new PrimaryLevelData(worldsettings, worldoptions, worlddimensions_b.specialWorldProperty(), lifecycle);
+            iregistry = worlddimensions_b.dimensions();
+        }
+        worlddata.customDimensions = iregistry;
+        worlddata.checkName(name);
+        worlddata.setModdedInfo(console.getServerModName(), console.getModdedStatus().shouldReportAsModified());
+
+        long j = BiomeManager.obfuscateSeed(creator.seed());
+        List<CustomSpawner> list = ImmutableList.of(new PhantomSpawner(), new PatrolSpawner(), new CatSpawner(), new VillageSiege(), new WanderingTraderSpawner(worlddata));
+        LevelStem worlddimension = iregistry.get(actualDimension);
+
+        WorldInfo worldInfo = new CraftWorldInfo(worlddata, worldSession, creator.environment(), worlddimension.type().value(), worlddimension.generator(), craftServer.getHandle().getServer().registryAccess()); // Paper
+        if (biomeProvider == null && generator != null) {
+            biomeProvider = generator.getDefaultBiomeProvider(worldInfo);
+        }
+
+        if (console.options.has("forceUpgrade")) {
+            net.minecraft.server.Main.convertWorldButItWorks(
+                    actualDimension, worldSession, DataFixers.getDataFixer(), worlddimension.generator().getTypeNameForDataFixer(), console.options.has("eraseCache")
+            );
+        }
+
+        ResourceKey<net.minecraft.world.level.Level> worldKey;
+        worldKey = ResourceKey.create(Registries.DIMENSION, new net.minecraft.resources.ResourceLocation(creator.key().getNamespace().toLowerCase(java.util.Locale.ENGLISH), creator.key().getKey().toLowerCase(java.util.Locale.ENGLISH))); // Paper
+
+        ServerLevel internal = new ServerLevel(console, console.executor, worldSession, worlddata, worldKey, worlddimension, console.progressListenerFactory.create(11),
+                worlddata.isDebugWorld(), j, creator.environment() == org.bukkit.World.Environment.NORMAL ? list : ImmutableList.of(), true, null, creator.environment(), generator, biomeProvider);
+
+        console.addLevel(internal);
+
+        int loadRegionRadius = ((32) >> 4);
+        internal.randomSpawnSelection = new ChunkPos(internal.getChunkSource().randomState().sampler().findSpawnPosition());
+        for (int currX = -loadRegionRadius; currX <= loadRegionRadius; ++currX) {
+            for (int currZ = -loadRegionRadius; currZ <= loadRegionRadius; ++currZ) {
+                ChunkPos pos = new ChunkPos(currX, currZ);
+                internal.chunkSource.addTicketAtLevel(
+                        TicketType.UNKNOWN, pos, io.papermc.paper.chunk.system.scheduling.ChunkHolderManager.MAX_TICKET_LEVEL, pos
+                );
+            }
+        }
+
+        internal.setSpawnSettings(true, true);
+        internal.keepSpawnInMemory = creator.keepSpawnLoaded().toBooleanOrElse(internal.getWorld().getKeepSpawnInMemory()); // Paper
+        io.papermc.paper.threadedregions.RegionizedServer.getInstance().addWorld(internal);
+
+        Bukkit.getPluginManager().callEvent(new WorldLoadEvent(internal.getWorld()));
+
+        return internal.getWorld();
     }
 
     @Override

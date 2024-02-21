@@ -6,4 +6,8 @@ public class NbtException extends RuntimeException {
         super(message);
     }
 
+    public NbtException(Throwable e) {
+        super(e);
+    }
+
 }

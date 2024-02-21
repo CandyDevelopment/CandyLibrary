@@ -1,13 +1,13 @@
 package fit.d6.candy.nms.v1_19_R3.item;
 
 import fit.d6.candy.api.item.BlockInput;
+import net.minecraft.core.BlockPos;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.craftbukkit.v1_19_R3.CraftWorld;
 import org.bukkit.craftbukkit.v1_19_R3.block.data.CraftBlockData;
-import org.bukkit.craftbukkit.v1_19_R3.util.CraftLocation;
 import org.jetbrains.annotations.NotNull;
 
 public class BukkitBlockInput implements BlockInput {
@@ -30,7 +30,7 @@ public class BukkitBlockInput implements BlockInput {
 
     @Override
     public @NotNull Block place(@NotNull Location location, int flags) {
-        this.nmsInput.place(((CraftWorld) location.getWorld()).getHandle(), CraftLocation.toBlockPosition(location), flags);
+        this.nmsInput.place(((CraftWorld) location.getWorld()).getHandle(), new BlockPos(location.getBlockX(), location.getBlockY(), location.getBlockZ()), flags);
         return location.getBlock();
     }
 

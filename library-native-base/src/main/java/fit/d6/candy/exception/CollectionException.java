@@ -6,4 +6,8 @@ public class CollectionException extends RuntimeException {
         super(message);
     }
 
+    public CollectionException(Throwable e) {
+        super(e);
+    }
+
 }

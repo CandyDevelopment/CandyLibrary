@@ -6,4 +6,8 @@ public class ServiceNotExistsException extends RuntimeException {
         super(message);
     }
 
+    public ServiceNotExistsException(Throwable e) {
+        super(e);
+    }
+
 }
