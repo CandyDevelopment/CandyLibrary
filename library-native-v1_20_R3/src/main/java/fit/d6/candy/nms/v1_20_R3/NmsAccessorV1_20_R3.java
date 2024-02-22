@@ -1132,6 +1132,8 @@ public class NmsAccessorV1_20_R3 implements NmsAccessor {
         }
         // Paper end - fix and optimise world upgrading
 
+        Preconditions.checkNotNull(generator);
+        Preconditions.checkNotNull(biomeProvider);
         ServerLevel internal = new ServerLevel(console, console.executor, worldSession, worlddata, worldKey, worlddimension, console.progressListenerFactory.create(11),
                 worlddata.isDebugWorld(), j, creator.environment() == World.Environment.NORMAL ? list : ImmutableList.of(), true, console.overworld().getRandomSequences(), creator.environment(), generator, biomeProvider);
         // internal.keepSpawnInMemory = creator.keepSpawnInMemory(); // Paper - replace
@@ -1275,6 +1277,7 @@ public class NmsAccessorV1_20_R3 implements NmsAccessor {
                 .registryOrThrow(Registries.DIMENSION_TYPE)
                 .get(((ResourceKey<LevelStem>) environment.getKey()).location());
 
+        Preconditions.checkNotNull(dimensionType);
         OptionalLong fixedOptionLong = dimensionType.fixedTime();
 
         builder.fixedTime = fixedOptionLong.isPresent() ? fixedOptionLong.getAsLong() : null;
@@ -1443,10 +1446,8 @@ public class NmsAccessorV1_20_R3 implements NmsAccessor {
             );
         }
 
-        if (worldKey == null) {
-            worldKey = ResourceKey.create(Registries.DIMENSION, new net.minecraft.resources.ResourceLocation(creator.key().getNamespace().toLowerCase(java.util.Locale.ENGLISH), creator.key().getKey().toLowerCase(java.util.Locale.ENGLISH))); // Paper
-        }
-
+        Preconditions.checkNotNull(generator);
+        Preconditions.checkNotNull(biomeProvider);
         ServerLevel internal = new ServerLevel(console, console.executor, worldSession, worlddata, worldKey, worlddimension, console.progressListenerFactory.create(11),
                 worlddata.isDebugWorld(), j, creator.environment() == World.Environment.NORMAL ? list : ImmutableList.of(), true, null, creator.environment(), generator, biomeProvider);
 

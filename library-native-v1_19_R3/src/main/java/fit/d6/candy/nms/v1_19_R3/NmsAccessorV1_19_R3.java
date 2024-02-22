@@ -707,7 +707,7 @@ public class NmsAccessorV1_19_R3 implements NmsAccessor {
 
     @Override
     public List<?> getNetworkManagers() {
-        return MinecraftServer.getServer().getConnection().getConnections();
+        return Objects.requireNonNull(MinecraftServer.getServer().getConnection()).getConnections();
     }
 
     @Override
@@ -719,7 +719,7 @@ public class NmsAccessorV1_19_R3 implements NmsAccessor {
     public void injectNetworkManager(ProtocolManager interfaceOne, Logger logger, Object networkManager, Set<Channel> injected) {
         BukkitProtocolManager protocolManager = (BukkitProtocolManager) interfaceOne;
         Connection connection = (Connection) networkManager;
-        PacketHandler handler = new PacketHandler(protocolManager, logger, connection.getPlayer().getBukkitEntity());
+        PacketHandler handler = new PacketHandler(protocolManager, logger, Objects.requireNonNull(connection.getPlayer()).getBukkitEntity());
         this.injectPlayer(handler, connection.getPlayer().getBukkitEntity(), injected);
     }
 
@@ -757,8 +757,7 @@ public class NmsAccessorV1_19_R3 implements NmsAccessor {
 
     @Override
     public Object packetAsVanilla(Packet packet) {
-        if (packet instanceof BukkitClientboundPlayerChatPacket) {
-            BukkitClientboundPlayerChatPacket bukkitPacket = (BukkitClientboundPlayerChatPacket) packet;
+        if (packet instanceof BukkitClientboundPlayerChatPacket bukkitPacket) {
             ClientboundPlayerChatPacket original = (ClientboundPlayerChatPacket) bukkitPacket.getOriginal();
 
             net.minecraft.network.chat.Component newContent = PaperAdventure.asVanilla(bukkitPacket.getContent());
@@ -1089,6 +1088,8 @@ public class NmsAccessorV1_19_R3 implements NmsAccessor {
             worldKey = ResourceKey.create(Registries.DIMENSION, new net.minecraft.resources.ResourceLocation(creator.key().getNamespace().toLowerCase(java.util.Locale.ENGLISH), creator.key().getKey().toLowerCase(java.util.Locale.ENGLISH))); // Paper
         }
 
+        Preconditions.checkNotNull(generator);
+        Preconditions.checkNotNull(biomeProvider);
         ServerLevel internal = new ServerLevel(console, console.executor, worldSession, worlddata, worldKey, worlddimension, console.progressListenerFactory.create(11),
                 worlddata.isDebugWorld(), j, creator.environment() == World.Environment.NORMAL ? list : ImmutableList.of(), true, creator.environment(), generator, biomeProvider);
 
@@ -1233,6 +1234,7 @@ public class NmsAccessorV1_19_R3 implements NmsAccessor {
                 .registryOrThrow(Registries.DIMENSION_TYPE)
                 .get(((ResourceKey<LevelStem>) environment.getKey()).location());
 
+        Preconditions.checkNotNull(dimensionType);
         OptionalLong fixedOptionLong = dimensionType.fixedTime();
 
         builder.fixedTime = fixedOptionLong.isPresent() ? fixedOptionLong.getAsLong() : null;
@@ -1269,11 +1271,13 @@ public class NmsAccessorV1_19_R3 implements NmsAccessor {
         String name = creator.name();
 
         String levelName = console.getProperties().levelName;
-        if (name.equals(levelName)
-                || (console.isNetherEnabled() && name.equals(levelName + "_nether"))
-                || (craftServer.getAllowEnd() && name.equals(levelName + "_the_end"))
-        ) {
-            return Bukkit.getWorld(name);
+        ResourceKey<net.minecraft.world.level.Level> worldKey;
+        if (name.equals(levelName + "_nether")) {
+            worldKey = net.minecraft.world.level.Level.NETHER;
+        } else if (name.equals(levelName + "_the_end")) {
+            worldKey = net.minecraft.world.level.Level.END;
+        } else {
+            worldKey = ResourceKey.create(Registries.DIMENSION, new net.minecraft.resources.ResourceLocation(creator.key().getNamespace().toLowerCase(java.util.Locale.ENGLISH), creator.key().getKey().toLowerCase(java.util.Locale.ENGLISH))); // Paper
         }
 
         ChunkGenerator generator = creator.generator();
@@ -1367,9 +1371,8 @@ public class NmsAccessorV1_19_R3 implements NmsAccessor {
             );
         }
 
-        ResourceKey<Level> worldKey;
-        worldKey = ResourceKey.create(Registries.DIMENSION, new ResourceLocation(creator.key().getNamespace().toLowerCase(Locale.ENGLISH), creator.key().getKey().toLowerCase(Locale.ENGLISH))); // Paper
-
+        Preconditions.checkNotNull(generator);
+        Preconditions.checkNotNull(biomeProvider);
         ServerLevel internal = new ServerLevel(console, console.executor, worldSession, worlddata, worldKey, worlddimension, craftServer.getServer().progressListenerFactory.create(11),
                 worlddata.isDebugWorld(), j, creator.environment() == World.Environment.NORMAL ? list : ImmutableList.of(), true, creator.environment(), generator, biomeProvider);
 

@@ -8,6 +8,6 @@ public enum NoiseSettings {
     NETHER,
     END,
     CAVES,
-    FLOATING_ISLANDS;
+    FLOATING_ISLANDS
 
 }

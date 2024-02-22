@@ -2,6 +2,7 @@ package fit.d6.candy.nms.v1_19_R2;
 
 import com.destroystokyo.paper.profile.CraftPlayerProfile;
 import com.destroystokyo.paper.profile.PlayerProfile;
+import com.google.common.base.Preconditions;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.mojang.authlib.GameProfile;
@@ -442,7 +443,7 @@ public class NmsAccessorV1_19_R2 implements NmsAccessor {
     }
 
     @Override
-    public Location getArgumentLoadedBlockPosition(Object context, World world, String name) throws CommandSyntaxException {
+    public Location getArgumentLoadedBlockPosition(Object context, World world, String name) {
         throw new CommandException("Not available in this nms version");
     }
 
@@ -682,7 +683,7 @@ public class NmsAccessorV1_19_R2 implements NmsAccessor {
 
     @Override
     public List<?> getNetworkManagers() {
-        return MinecraftServer.getServer().getConnection().getConnections();
+        return Objects.requireNonNull(MinecraftServer.getServer().getConnection()).getConnections();
     }
 
     @Override
@@ -694,7 +695,7 @@ public class NmsAccessorV1_19_R2 implements NmsAccessor {
     public void injectNetworkManager(ProtocolManager interfaceOne, Logger logger, Object networkManager, Set<Channel> injected) {
         BukkitProtocolManager protocolManager = (BukkitProtocolManager) interfaceOne;
         Connection connection = (Connection) networkManager;
-        PacketHandler handler = new PacketHandler(protocolManager, logger, connection.getPlayer().getBukkitEntity());
+        PacketHandler handler = new PacketHandler(protocolManager, logger, Objects.requireNonNull(connection.getPlayer()).getBukkitEntity());
         this.injectPlayer(handler, connection.getPlayer().getBukkitEntity(), injected);
     }
 
@@ -732,8 +733,7 @@ public class NmsAccessorV1_19_R2 implements NmsAccessor {
 
     @Override
     public Object packetAsVanilla(Packet packet) {
-        if (packet instanceof BukkitClientboundPlayerChatPacket) {
-            BukkitClientboundPlayerChatPacket bukkitPacket = (BukkitClientboundPlayerChatPacket) packet;
+        if (packet instanceof BukkitClientboundPlayerChatPacket bukkitPacket) {
             ClientboundPlayerChatPacket original = (ClientboundPlayerChatPacket) bukkitPacket.getOriginal();
 
             net.minecraft.network.chat.Component newContent = PaperAdventure.asVanilla(bukkitPacket.getContent());
@@ -1078,6 +1078,7 @@ public class NmsAccessorV1_19_R2 implements NmsAccessor {
                 .registryOrThrow(Registries.DIMENSION_TYPE)
                 .get(((ResourceKey<LevelStem>) environment.getKey()).location());
 
+        Preconditions.checkNotNull(dimensionType);
         OptionalLong fixedOptionLong = dimensionType.fixedTime();
 
         builder.fixedTime = fixedOptionLong.isPresent() ? fixedOptionLong.getAsLong() : null;

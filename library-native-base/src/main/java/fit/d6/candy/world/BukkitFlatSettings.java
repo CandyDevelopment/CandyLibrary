@@ -10,10 +10,7 @@ import org.bukkit.block.Biome;
 import org.bukkit.generator.structure.Structure;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class BukkitFlatSettings implements FlatSettings {
 
@@ -25,26 +22,31 @@ public class BukkitFlatSettings implements FlatSettings {
 
     @Override
     public @NotNull FlatSettings layer(@NotNull Material type, int height) {
+        this.layers.add(new AbstractMap.SimpleEntry<>(type, height));
         return this;
     }
 
     @Override
     public @NotNull FlatSettings biome(@NotNull Biome biome) {
+        this.biome = biome;
         return this;
     }
 
     @Override
     public @NotNull FlatSettings lakes(boolean lakes) {
+        this.lakes = lakes;
         return this;
     }
 
     @Override
     public @NotNull FlatSettings features(boolean features) {
+        this.features = features;
         return this;
     }
 
     @Override
     public @NotNull FlatSettings structures(@NotNull Set<@NotNull Structure> structures) {
+        this.structures = structures;
         return this;
     }
 

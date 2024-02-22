@@ -43,28 +43,16 @@ public class BukkitWorldInitializer implements WorldInitializer {
     public @NotNull WorldInitializer environment(World.@NotNull Environment environment) {
         this.creator.environment(environment);
         switch (environment) {
-            case NORMAL -> {
-                this.environment(BukkitEnvironment.OVERWORLD);
-                break;
-            }
-            case NETHER -> {
-                this.environment(BukkitEnvironment.NETHER);
-                break;
-            }
-            case THE_END -> {
-                this.environment(BukkitEnvironment.THE_END);
-                break;
-            }
-            case CUSTOM -> {
-                throw new WorldException("Illegal world environment");
-            }
+            case NORMAL -> this.environment(BukkitEnvironment.OVERWORLD);
+            case NETHER -> this.environment(BukkitEnvironment.NETHER);
+            case THE_END -> this.environment(BukkitEnvironment.THE_END);
+            case CUSTOM -> throw new WorldException("Illegal world environment");
         }
         return this;
     }
 
     @Override
     public @NotNull WorldInitializer environment(@NotNull Environment environment) {
-        // throw new UnderDevelopmentException("Still under development!");
         this.environment = environment;
         return this;
     }

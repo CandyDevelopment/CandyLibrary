@@ -13,9 +13,7 @@ public class BukkitCreator implements Creator {
     @Override
     public void create(Plugin plugin, WorldCreator creator, BukkitWorldInitializer initializer, Consumer<fit.d6.candy.api.world.World> consumer) {
         Scheduler.global(plugin)
-                .runTask(scheduledTask -> {
-                    consumer.accept(new BukkitWorld(CandyLibrary.version().isWorldEnvironemtnSupport() ? NmsAccessor.getAccessor().createBukkitWorld(creator, initializer) : creator.createWorld()));
-                });
+                .runTask(scheduledTask -> consumer.accept(new BukkitWorld(CandyLibrary.version().isWorldEnvironemtnSupport() ? NmsAccessor.getAccessor().createBukkitWorld(creator, initializer) : creator.createWorld())));
     }
 
 }

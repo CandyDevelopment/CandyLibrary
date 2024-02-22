@@ -62,7 +62,7 @@ public class CandyLibraryPlugin extends JavaPlugin implements CandyLibrary {
         String version = Bukkit.getBukkitVersion();
         version = version.split("-")[0].split("\\.")[1];
         if (Integer.parseInt(version) >= 21) { // For 1.21+ paper removed craft bukkit relocation
-
+            candyVersion = CandyVersion.V1_21;
         } else {
             if (Ref.getObcVersion().equals("1_20_R3")) {
                 this.accessor = new NmsAccessorV1_20_R3();
@@ -146,6 +146,11 @@ public class CandyLibraryPlugin extends JavaPlugin implements CandyLibrary {
         if (!this.services.containsKey(clazz))
             throw new ServiceNotExistsException("The service is not registered or not exists");
         return (S) this.services.get(clazz);
+    }
+
+    @Override
+    public @NotNull CandyVersion getVersion() {
+        return this.candyVersion;
     }
 
     public @NotNull NmsAccessor getNmsAccessor() {

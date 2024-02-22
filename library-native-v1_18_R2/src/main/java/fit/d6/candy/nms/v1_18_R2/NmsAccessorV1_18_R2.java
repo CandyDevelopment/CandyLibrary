@@ -2,6 +2,7 @@ package fit.d6.candy.nms.v1_18_R2;
 
 import com.destroystokyo.paper.profile.CraftPlayerProfile;
 import com.destroystokyo.paper.profile.PlayerProfile;
+import com.google.common.base.Preconditions;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.mojang.authlib.GameProfile;
@@ -319,7 +320,7 @@ public class NmsAccessorV1_18_R2 implements NmsAccessor {
     }
 
     @Override
-    public GameMode getArgumentGameMode(Object context, String name) throws CommandSyntaxException {
+    public GameMode getArgumentGameMode(Object context, String name) {
         throw new CommandException("This argument type is not supported under this version");
     }
 
@@ -356,12 +357,12 @@ public class NmsAccessorV1_18_R2 implements NmsAccessor {
     }
 
     @Override
-    public Enchantment getArgumentEnchantment(Object context, String name) throws CommandSyntaxException {
+    public Enchantment getArgumentEnchantment(Object context, String name) {
         return org.bukkit.Registry.ENCHANTMENT.get(CraftNamespacedKey.fromMinecraft(Objects.requireNonNull(Registry.ENCHANTMENT.getKey(ItemEnchantmentArgument.getEnchantment(((CommandContext<CommandSourceStack>) context), name)))));
     }
 
     @Override
-    public EntityType getArgumentEntityType(Object context, String name) throws CommandSyntaxException {
+    public EntityType getArgumentEntityType(Object context, String name) {
         throw new CommandException("Not available in this nms version");
     }
 
@@ -371,7 +372,7 @@ public class NmsAccessorV1_18_R2 implements NmsAccessor {
     }
 
     @Override
-    public PotionEffectType getArgumentPotionEffectType(Object context, String name) throws CommandSyntaxException {
+    public PotionEffectType getArgumentPotionEffectType(Object context, String name) {
         return org.bukkit.Registry.POTION_EFFECT_TYPE.get(CraftNamespacedKey.fromMinecraft(Objects.requireNonNull(Registry.MOB_EFFECT.getKey(MobEffectArgument.getEffect(((CommandContext<CommandSourceStack>) context), name)))));
     }
 
@@ -416,7 +417,7 @@ public class NmsAccessorV1_18_R2 implements NmsAccessor {
     }
 
     @Override
-    public Location getArgumentLoadedBlockPosition(Object context, World world, String name) throws CommandSyntaxException {
+    public Location getArgumentLoadedBlockPosition(Object context, World world, String name) {
         throw new CommandException("Not available in this nms version");
     }
 
@@ -653,7 +654,7 @@ public class NmsAccessorV1_18_R2 implements NmsAccessor {
 
     @Override
     public List<?> getNetworkManagers() {
-        return ((CraftServer) Bukkit.getServer()).getServer().getConnection().getConnections();
+        return Objects.requireNonNull(((CraftServer) Bukkit.getServer()).getServer().getConnection()).getConnections();
     }
 
     @Override
@@ -964,9 +965,9 @@ public class NmsAccessorV1_18_R2 implements NmsAccessor {
 
         LevelStem stem = new LevelStem(
                 holder,
-                console.registryAccess()
-                        .registryOrThrow(Registry.LEVEL_STEM_REGISTRY)
-                        .get(LevelStem.OVERWORLD)
+                Objects.requireNonNull(console.registryAccess()
+                                .registryOrThrow(Registry.LEVEL_STEM_REGISTRY)
+                                .get(LevelStem.OVERWORLD))
                         .generator()
         );
 
@@ -1005,6 +1006,7 @@ public class NmsAccessorV1_18_R2 implements NmsAccessor {
         }
 
         builder.fixedTime = fixedOptionLong.isPresent() ? fixedOptionLong.getAsLong() : null;
+        Preconditions.checkNotNull(dimensionType);
         builder.hasSkylight = dimensionType.hasSkyLight();
         builder.hasCeiling = dimensionType.hasCeiling();
         builder.ultraWarm = dimensionType.ultraWarm();
