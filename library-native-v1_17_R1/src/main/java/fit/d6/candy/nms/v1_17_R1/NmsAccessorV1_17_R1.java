@@ -437,7 +437,7 @@ public class NmsAccessorV1_17_R1 implements NmsAccessor {
     }
 
     @Override
-    public Location getArgumentLoadedBlockPosition(Object context, World world, String name) throws CommandSyntaxException {
+    public Location getArgumentLoadedBlockPosition(Object context, World world, String name) {
         throw new CommandException("Not available in this nms version");
     }
 

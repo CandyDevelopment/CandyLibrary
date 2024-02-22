@@ -2,6 +2,7 @@ package fit.d6.candy.nms.v1_18_R1;
 
 import com.destroystokyo.paper.profile.CraftPlayerProfile;
 import com.destroystokyo.paper.profile.PlayerProfile;
+import com.google.common.base.Preconditions;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.mojang.authlib.GameProfile;
@@ -337,7 +338,7 @@ public class NmsAccessorV1_18_R1 implements NmsAccessor {
     }
 
     @Override
-    public GameMode getArgumentGameMode(Object context, String name) throws CommandSyntaxException {
+    public GameMode getArgumentGameMode(Object context, String name) {
         throw new CommandException("This argument type is not supported under this version");
     }
 
@@ -374,12 +375,12 @@ public class NmsAccessorV1_18_R1 implements NmsAccessor {
     }
 
     @Override
-    public Enchantment getArgumentEnchantment(Object context, String name) throws CommandSyntaxException {
+    public Enchantment getArgumentEnchantment(Object context, String name) {
         return org.bukkit.Registry.ENCHANTMENT.get(CraftNamespacedKey.fromMinecraft(Objects.requireNonNull(Registry.ENCHANTMENT.getKey(ItemEnchantmentArgument.getEnchantment(((CommandContext<CommandSourceStack>) context), name)))));
     }
 
     @Override
-    public EntityType getArgumentEntityType(Object context, String name) throws CommandSyntaxException {
+    public EntityType getArgumentEntityType(Object context, String name) {
         throw new CommandException("Not available in this nms version");
     }
 
@@ -389,7 +390,7 @@ public class NmsAccessorV1_18_R1 implements NmsAccessor {
     }
 
     @Override
-    public PotionEffectType getArgumentPotionEffectType(Object context, String name) throws CommandSyntaxException {
+    public PotionEffectType getArgumentPotionEffectType(Object context, String name) {
         return org.bukkit.Registry.POTION_EFFECT_TYPE.get(CraftNamespacedKey.fromMinecraft(Objects.requireNonNull(Registry.MOB_EFFECT.getKey(MobEffectArgument.getEffect(((CommandContext<CommandSourceStack>) context), name)))));
     }
 
@@ -434,7 +435,7 @@ public class NmsAccessorV1_18_R1 implements NmsAccessor {
     }
 
     @Override
-    public Location getArgumentLoadedBlockPosition(Object context, World world, String name) throws CommandSyntaxException {
+    public Location getArgumentLoadedBlockPosition(Object context, World world, String name) {
         throw new CommandException("Not available in this nms version");
     }
 
@@ -671,7 +672,7 @@ public class NmsAccessorV1_18_R1 implements NmsAccessor {
 
     @Override
     public List<?> getNetworkManagers() {
-        return ((CraftServer) Bukkit.getServer()).getServer().getConnection().getConnections();
+        return Objects.requireNonNull(((CraftServer) Bukkit.getServer()).getServer().getConnection()).getConnections();
     }
 
     @Override
@@ -963,10 +964,10 @@ public class NmsAccessorV1_18_R1 implements NmsAccessor {
 
         registryDimensions.registerOrOverride(OptionalInt.empty(), resourceKeyDimension, dimensionType, Lifecycle.stable());
 
-        LevelStem dimension = new LevelStem(() -> dimensionType, ((CraftServer) Bukkit.getServer()).getServer()
+        LevelStem dimension = new LevelStem(() -> dimensionType, Objects.requireNonNull(((CraftServer) Bukkit.getServer()).getServer()
                 .registryAccess()
                 .registryOrThrow(Registry.LEVEL_STEM_REGISTRY)
-                .get(LevelStem.OVERWORLD).generator());
+                .get(LevelStem.OVERWORLD)).generator());
 
         return new BukkitEnvironment(resourceKeyLevelStem, registrymaterials.registerOrOverride(OptionalInt.empty(), resourceKeyLevelStem, dimension, Lifecycle.stable()));
     }
@@ -1000,6 +1001,7 @@ public class NmsAccessorV1_18_R1 implements NmsAccessor {
             }
         }
 
+        Preconditions.checkNotNull(dimensionType);
         builder.fixedTime = fixedOptionLong.isPresent() ? fixedOptionLong.getAsLong() : null;
         builder.hasSkylight = dimensionType.hasSkyLight();
         builder.hasCeiling = dimensionType.hasCeiling();
@@ -1016,7 +1018,7 @@ public class NmsAccessorV1_18_R1 implements NmsAccessor {
         builder.logicalHeight = dimensionType.logicalHeight();
         builder.ambientLight = ambientLight == null ? 0.0f : ambientLight;
 
-        builder.infiniburn = Bukkit.getServer().getTag("blocks", CraftNamespacedKey.fromMinecraft(BlockTags.getAllTags().getId(dimensionType.infiniburn())), Material.class);
+        builder.infiniburn = Bukkit.getServer().getTag("blocks", CraftNamespacedKey.fromMinecraft(Objects.requireNonNull(BlockTags.getAllTags().getId(dimensionType.infiniburn()))), Material.class);
         builder.effectsLocation = CraftNamespacedKey.fromMinecraft(dimensionType.effectsLocation());
 
         return builder;
