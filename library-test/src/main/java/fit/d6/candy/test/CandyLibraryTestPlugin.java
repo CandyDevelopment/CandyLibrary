@@ -6,6 +6,7 @@ import fit.d6.candy.api.command.CommandManager;
 import fit.d6.candy.api.command.CommandService;
 import fit.d6.candy.api.configuration.ConfigurationService;
 import fit.d6.candy.api.configuration.ConfigurationType;
+import fit.d6.candy.api.event.Events;
 import fit.d6.candy.api.protocol.ProtocolService;
 import fit.d6.candy.api.protocol.packet.ClientboundPlayerChatPacket;
 import fit.d6.candy.api.protocol.packet.PacketType;
@@ -23,6 +24,8 @@ import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.WorldType;
 import org.bukkit.block.Biome;
+import org.bukkit.event.player.PlayerDropItemEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
@@ -181,6 +184,11 @@ public class CandyLibraryTestPlugin extends JavaPlugin {
                     world.asBukkit().setAutoSave(true);
                     world.asBukkit().setSpawnLocation(0, 100, 0);
                 });
+
+        Events.subscribe(PlayerDropItemEvent.class)
+                .filter(event -> event.getItemDrop().getItemStack().getType() == Material.DIAMOND)
+                .handler(event -> event.getPlayer().sendMessage("You dropped a diamond"))
+                .bind(this);
     }
 
     public static CandyLibraryTestPlugin getInstance() {

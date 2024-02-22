@@ -19,7 +19,7 @@ import java.util.function.Consumer;
 public class BukkitWorldInitializer implements WorldInitializer {
 
     private final WorldCreator creator;
-    private Environment environment;
+    private Environment environment = BukkitEnvironment.OVERWORLD;
 
     public BukkitWorldInitializer(NamespacedKey name) {
         this.creator = new WorldCreator(name);

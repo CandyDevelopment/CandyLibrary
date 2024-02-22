@@ -1132,8 +1132,6 @@ public class NmsAccessorV1_20_R3 implements NmsAccessor {
         }
         // Paper end - fix and optimise world upgrading
 
-        Preconditions.checkNotNull(generator);
-        Preconditions.checkNotNull(biomeProvider);
         ServerLevel internal = new ServerLevel(console, console.executor, worldSession, worlddata, worldKey, worlddimension, console.progressListenerFactory.create(11),
                 worlddata.isDebugWorld(), j, creator.environment() == World.Environment.NORMAL ? list : ImmutableList.of(), true, console.overworld().getRandomSequences(), creator.environment(), generator, biomeProvider);
         // internal.keepSpawnInMemory = creator.keepSpawnInMemory(); // Paper - replace
@@ -1446,8 +1444,6 @@ public class NmsAccessorV1_20_R3 implements NmsAccessor {
             );
         }
 
-        Preconditions.checkNotNull(generator);
-        Preconditions.checkNotNull(biomeProvider);
         ServerLevel internal = new ServerLevel(console, console.executor, worldSession, worlddata, worldKey, worlddimension, console.progressListenerFactory.create(11),
                 worlddata.isDebugWorld(), j, creator.environment() == World.Environment.NORMAL ? list : ImmutableList.of(), true, null, creator.environment(), generator, biomeProvider);
 

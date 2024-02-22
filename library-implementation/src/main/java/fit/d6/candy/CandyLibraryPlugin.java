@@ -7,6 +7,7 @@ import fit.d6.candy.api.collection.CollectionService;
 import fit.d6.candy.api.command.CommandService;
 import fit.d6.candy.api.configuration.ConfigurationService;
 import fit.d6.candy.api.database.DatabaseService;
+import fit.d6.candy.api.event.EventService;
 import fit.d6.candy.api.gui.GuiService;
 import fit.d6.candy.api.item.ItemService;
 import fit.d6.candy.api.nbt.NbtService;
@@ -20,6 +21,7 @@ import fit.d6.candy.collection.BukkitCollectionService;
 import fit.d6.candy.command.BukkitCommandService;
 import fit.d6.candy.configuration.BukkitConfigurationService;
 import fit.d6.candy.database.BukkitDatabaseService;
+import fit.d6.candy.event.BukkitEventService;
 import fit.d6.candy.exception.ServiceNotExistsException;
 import fit.d6.candy.gui.BukkitGuiService;
 import fit.d6.candy.item.BukkitItemService;
@@ -110,6 +112,7 @@ public class CandyLibraryPlugin extends JavaPlugin implements CandyLibrary {
         this.services.put(TimeService.class, new BukkitTimeService());
         this.services.put(SchedulerService.class, new BukkitSchedulerService(this.candyVersion.isFoliaSchedulerSupport()));
         this.services.put(WorldService.class, new BukkitWorldService());
+        this.services.put(EventService.class, new BukkitEventService());
         this.services.put(NmsAccessor.class, this.accessor);
 
         this.services.values().forEach(service -> {

@@ -1095,8 +1095,6 @@ public class NmsAccessorV1_20_R1 implements NmsAccessor {
             worldKey = ResourceKey.create(Registries.DIMENSION, new net.minecraft.resources.ResourceLocation(creator.key().getNamespace().toLowerCase(java.util.Locale.ENGLISH), creator.key().getKey().toLowerCase(java.util.Locale.ENGLISH))); // Paper
         }
 
-        Preconditions.checkNotNull(generator);
-        Preconditions.checkNotNull(biomeProvider);
         ServerLevel internal = new ServerLevel(console, console.executor, worldSession, worlddata, worldKey, worlddimension, console.progressListenerFactory.create(11),
                 worlddata.isDebugWorld(), j, creator.environment() == World.Environment.NORMAL ? list : ImmutableList.of(), true, console.overworld().getRandomSequences(), creator.environment(), generator, biomeProvider);
 
@@ -1378,8 +1376,6 @@ public class NmsAccessorV1_20_R1 implements NmsAccessor {
             );
         }
 
-        Preconditions.checkNotNull(generator);
-        Preconditions.checkNotNull(biomeProvider);
         ServerLevel internal = new ServerLevel(console, console.executor, worldSession, worlddata, worldKey, worlddimension, console.progressListenerFactory.create(11),
                 worlddata.isDebugWorld(), j, creator.environment() == org.bukkit.World.Environment.NORMAL ? list : ImmutableList.of(), true, null, creator.environment(), generator, biomeProvider);
 
