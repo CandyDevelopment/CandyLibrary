@@ -19,16 +19,25 @@ public interface WorldInitializer {
     WorldInitializer environment(@NotNull World.Environment environment);
 
     @NotNull
+    WorldInitializer environment(@NotNull Environment environment);
+
+    @NotNull
     WorldInitializer type(@NotNull WorldType type);
 
     @NotNull
     WorldInitializer generator(@NotNull ChunkGenerator generator);
 
     @NotNull
+    WorldInitializer generator(@NotNull String generator);
+
+    @NotNull
     WorldInitializer biomeProvider(@NotNull BiomeProvider provider);
 
     @NotNull
     WorldInitializer generatorsSettings(@NotNull String generatorsSettings);
+
+    @NotNull
+    WorldInitializer generatorsSettings(@NotNull FlatSettings flatSettings);
 
     @NotNull
     WorldInitializer generateStructures(boolean generate);

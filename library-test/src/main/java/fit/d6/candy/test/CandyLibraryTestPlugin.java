@@ -9,6 +9,9 @@ import fit.d6.candy.api.configuration.ConfigurationType;
 import fit.d6.candy.api.protocol.ProtocolService;
 import fit.d6.candy.api.protocol.packet.ClientboundPlayerChatPacket;
 import fit.d6.candy.api.protocol.packet.PacketType;
+import fit.d6.candy.api.world.Environment;
+import fit.d6.candy.api.world.EnvironmentBuilder;
+import fit.d6.candy.api.world.FlatSettings;
 import fit.d6.candy.api.world.WorldManager;
 import fit.d6.candy.test.commands.arguments.*;
 import fit.d6.candy.test.services.GuiServiceTest;
@@ -16,7 +19,10 @@ import fit.d6.candy.test.services.ScoreboardServiceTest;
 import fit.d6.candy.test.services.TabListServiceTest;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
+import org.bukkit.Material;
 import org.bukkit.World;
+import org.bukkit.WorldType;
+import org.bukkit.block.Biome;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
@@ -138,27 +144,42 @@ public class CandyLibraryTestPlugin extends JavaPlugin {
 
         // Actually, if you want to connect these worlds, you should register a listener to listen player use portal event and handle it by yourself
 
-        WorldManager.getManager().create("test_world")
-                .initialize(this, world -> {
-                    WORLD.set(world.asBukkit());
-                    WORLD.get().setAutoSave(true);
-                    WORLD.get().setSpawnLocation(0, 100, 0);
-                });
+        if (CandyLibrary.version().isWorldEnvironemtnSupport()) {
+            Environment environment = WorldManager.getManager().registerEnvironment(
+                    EnvironmentBuilder.copy(Environment.overworld(), "candy_test")
+                            .minY(-128)
+                            .height(128 + 512)
+            );
 
-        WorldManager.getManager().create("test_world_nether")
-                .environment(World.Environment.NETHER)
-                .initialize(this, world -> {
-                    World bukkitWorld = world.asBukkit();
-                    bukkitWorld.setAutoSave(true);
-                    bukkitWorld.setSpawnLocation(0, 100, 0);
-                });
+            WorldManager.getManager().create("test_world")
+                    .environment(environment)
+                    .initialize(this, world -> {
+                        WORLD.set(world.asBukkit());
+                        WORLD.get().setAutoSave(true);
+                        WORLD.get().setSpawnLocation(0, 100, 0);
+                    });
+        } else {
+            WorldManager.getManager().create("test_world")
+                    .initialize(this, world -> {
+                        WORLD.set(world.asBukkit());
+                        WORLD.get().setAutoSave(true);
+                        WORLD.get().setSpawnLocation(0, 100, 0);
+                    });
+        }
 
-        WorldManager.getManager().create("test_world_the_end")
-                .environment(World.Environment.THE_END)
+        WorldManager.getManager().create("flat_test")
+                .type(WorldType.FLAT)
+                .generator("flat")
+                .generatorsSettings(
+                        FlatSettings.of()
+                                .layer(Material.STONE, 5)
+                                .layer(Material.BEDROCK, 1)
+                                .lakes(true)
+                                .biome(Biome.PLAINS)
+                )
                 .initialize(this, world -> {
-                    World bukkitWorld = world.asBukkit();
-                    bukkitWorld.setAutoSave(true);
-                    bukkitWorld.setSpawnLocation(0, 100, 0);
+                    world.asBukkit().setAutoSave(true);
+                    world.asBukkit().setSpawnLocation(0, 100, 0);
                 });
     }
 

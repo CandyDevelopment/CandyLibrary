@@ -25,9 +25,13 @@ import fit.d6.candy.api.protocol.packet.ClientboundPlayerChatPacket;
 import fit.d6.candy.api.protocol.packet.Packet;
 import fit.d6.candy.api.visual.scoreboard.ScoreContent;
 import fit.d6.candy.api.visual.tablist.TabListContent;
+import fit.d6.candy.api.world.Environment;
 import fit.d6.candy.visual.scoreboard.BukkitObjective;
 import fit.d6.candy.visual.scoreboard.BukkitScore;
 import fit.d6.candy.visual.scoreboard.BukkitScoreContent;
+import fit.d6.candy.world.BukkitEnvironment;
+import fit.d6.candy.world.BukkitEnvironmentBuilder;
+import fit.d6.candy.world.BukkitWorldInitializer;
 import io.netty.channel.Channel;
 import net.kyori.adventure.text.Component;
 import org.bukkit.*;
@@ -320,8 +324,24 @@ public interface NmsAccessor extends Service {
 
     Rotation getArgumentRotation(Object context, String name);
 
-    default World createWorld(WorldCreator creator) {
+    World createBukkitWorld(WorldCreator creator, BukkitWorldInitializer initializer);
+
+    Environment registerEnvironment(BukkitEnvironmentBuilder builder);
+
+    BukkitEnvironmentBuilder copyEnvironment(BukkitEnvironment environment, BukkitEnvironmentBuilder builder);
+
+    default World createFoliaWorld(WorldCreator creator, BukkitWorldInitializer initializer) {
         return creator.createWorld();
+    }
+
+    Object worldLevelStemOverworld();
+
+    Object worldLevelStemNether();
+
+    Object worldLevelStemTheEnd();
+
+    default Object worldLevelStem(Object key) {
+        return key;
     }
 
     static NmsAccessor getAccessor() {

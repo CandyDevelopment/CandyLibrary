@@ -15,6 +15,7 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.mojang.brigadier.tree.CommandNode;
+import com.mojang.serialization.Lifecycle;
 import fit.d6.candy.api.gui.anvil.AnvilGuiScene;
 import fit.d6.candy.api.item.BlockInput;
 import fit.d6.candy.api.item.ItemInput;
@@ -27,9 +28,11 @@ import fit.d6.candy.api.protocol.packet.ClientboundDisconnectPacket;
 import fit.d6.candy.api.protocol.packet.Packet;
 import fit.d6.candy.api.visual.scoreboard.ScoreContent;
 import fit.d6.candy.api.visual.tablist.TabListContent;
+import fit.d6.candy.api.world.Environment;
 import fit.d6.candy.exception.CommandException;
 import fit.d6.candy.exception.PlayerException;
 import fit.d6.candy.exception.ProtocolException;
+import fit.d6.candy.exception.WorldException;
 import fit.d6.candy.gui.BukkitAnvilGuiScene;
 import fit.d6.candy.nms.FakeAnvil;
 import fit.d6.candy.nms.NmsAccessor;
@@ -45,6 +48,9 @@ import fit.d6.candy.protocol.packet.BukkitClientboundPlayerChatPacket;
 import fit.d6.candy.visual.scoreboard.BukkitObjective;
 import fit.d6.candy.visual.scoreboard.BukkitScore;
 import fit.d6.candy.visual.scoreboard.BukkitScoreContent;
+import fit.d6.candy.world.BukkitEnvironment;
+import fit.d6.candy.world.BukkitEnvironmentBuilder;
+import fit.d6.candy.world.BukkitWorldInitializer;
 import io.netty.channel.Channel;
 import io.papermc.paper.adventure.PaperAdventure;
 import net.kyori.adventure.text.Component;
@@ -60,7 +66,10 @@ import net.minecraft.commands.arguments.coordinates.Vec3Argument;
 import net.minecraft.commands.arguments.item.ItemArgument;
 import net.minecraft.commands.arguments.item.ItemPredicateArgument;
 import net.minecraft.commands.synchronization.SuggestionProviders;
+import net.minecraft.core.Holder;
+import net.minecraft.core.MappedRegistry;
 import net.minecraft.core.Registry;
+import net.minecraft.core.WritableRegistry;
 import net.minecraft.nbt.*;
 import net.minecraft.network.Connection;
 import net.minecraft.network.chat.ChatDecorator;
@@ -69,14 +78,22 @@ import net.minecraft.network.chat.PlayerChatMessage;
 import net.minecraft.network.chat.SignedMessageBody;
 import net.minecraft.network.protocol.game.*;
 import net.minecraft.network.protocol.login.ClientboundGameProfilePacket;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.ReloadableServerResources;
 import net.minecraft.server.ServerScoreboard;
+import net.minecraft.server.dedicated.DedicatedServer;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.tags.TagKey;
+import net.minecraft.util.valueproviders.ConstantInt;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.GameType;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.dimension.DimensionType;
+import net.minecraft.world.level.dimension.LevelStem;
 import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.scores.Objective;
@@ -88,12 +105,12 @@ import org.bukkit.*;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.command.CommandSender;
 import org.bukkit.craftbukkit.v1_19_R1.CraftParticle;
+import org.bukkit.craftbukkit.v1_19_R1.CraftServer;
 import org.bukkit.craftbukkit.v1_19_R1.command.VanillaCommandWrapper;
 import org.bukkit.craftbukkit.v1_19_R1.entity.CraftPlayer;
 import org.bukkit.craftbukkit.v1_19_R1.event.CraftEventFactory;
 import org.bukkit.craftbukkit.v1_19_R1.inventory.CraftContainer;
 import org.bukkit.craftbukkit.v1_19_R1.inventory.CraftItemStack;
-import org.bukkit.craftbukkit.v1_19_R1.potion.CraftPotionEffectType;
 import org.bukkit.craftbukkit.v1_19_R1.util.CraftNamespacedKey;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Entity;
@@ -107,9 +124,7 @@ import org.bukkit.util.Vector;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
+import java.lang.reflect.*;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -364,7 +379,7 @@ public class NmsAccessorV1_19_R1 implements NmsAccessor {
 
     @Override
     public Enchantment getArgumentEnchantment(Object context, String name) throws CommandSyntaxException {
-        return Enchantment.getByKey(CraftNamespacedKey.fromMinecraft(Objects.requireNonNull(Registry.ENCHANTMENT.getKey(ItemEnchantmentArgument.getEnchantment(((CommandContext<CommandSourceStack>) context), name)))));
+        return org.bukkit.Registry.ENCHANTMENT.get(CraftNamespacedKey.fromMinecraft(Objects.requireNonNull(Registry.ENCHANTMENT.getKey(ItemEnchantmentArgument.getEnchantment(((CommandContext<CommandSourceStack>) context), name)))));
     }
 
     @Override
@@ -379,7 +394,7 @@ public class NmsAccessorV1_19_R1 implements NmsAccessor {
 
     @Override
     public PotionEffectType getArgumentPotionEffectType(Object context, String name) throws CommandSyntaxException {
-        return CraftPotionEffectType.getByKey(CraftNamespacedKey.fromMinecraft(Objects.requireNonNull(Registry.MOB_EFFECT.getKey(MobEffectArgument.getEffect(((CommandContext<CommandSourceStack>) context), name)))));
+        return org.bukkit.Registry.POTION_EFFECT_TYPE.get(CraftNamespacedKey.fromMinecraft(Objects.requireNonNull(Registry.MOB_EFFECT.getKey(MobEffectArgument.getEffect(((CommandContext<CommandSourceStack>) context), name)))));
     }
 
     @Override
@@ -937,6 +952,137 @@ public class NmsAccessorV1_19_R1 implements NmsAccessor {
     public Rotation getArgumentRotation(Object context, String name) {
         Vec2 vec2 = RotationArgument.getRotation(((CommandContext<CommandSourceStack>) context), name).getRotation(((CommandContext<CommandSourceStack>) context).getSource());
         return new BukkitRotation(vec2.y, vec2.x);
+    }
+
+    @Override
+    public World createBukkitWorld(WorldCreator creator, BukkitWorldInitializer initializer) {
+        return creator.createWorld();
+    }
+
+    @Override
+    public Environment registerEnvironment(BukkitEnvironmentBuilder builder) {
+        CraftServer craftServer = (CraftServer) Bukkit.getServer();
+        DedicatedServer console = craftServer.getServer();
+
+        ResourceKey<DimensionType> resourceKeyDimension = ResourceKey.create(Registry.DIMENSION_TYPE_REGISTRY, CraftNamespacedKey.toMinecraft(builder.getKey()));
+        ResourceKey<LevelStem> resourceKeyLevelStem = ResourceKey.create(Registry.LEVEL_STEM_REGISTRY, CraftNamespacedKey.toMinecraft(builder.getKey()));
+        WritableRegistry<DimensionType> registryDimensions = (WritableRegistry<DimensionType>) console.registryAccess().registryOrThrow(Registry.DIMENSION_TYPE_REGISTRY);
+        WritableRegistry<LevelStem> registryLevelStem = (WritableRegistry<LevelStem>) console.registryAccess().registryOrThrow(Registry.LEVEL_STEM_REGISTRY);
+
+        for (Field field : MappedRegistry.class.getDeclaredFields()) {
+            if (field.getType() != boolean.class)
+                continue;
+            field.setAccessible(true);
+            try {
+                field.set(registryDimensions, false);
+                field.set(registryLevelStem, false);
+            } catch (IllegalAccessException e) {
+                throw new WorldException(e);
+            }
+            break;
+        }
+
+        DimensionType dimensionType = new DimensionType(
+                builder.fixedTime == null ? OptionalLong.empty() : OptionalLong.of(builder.fixedTime),
+                builder.hasSkylight,
+                builder.hasCeiling,
+                builder.ultraWarm,
+                builder.natural,
+                builder.coordinateScale,
+                builder.bedWorks,
+                builder.respawnAnchorWorks,
+                builder.minY,
+                builder.height,
+                builder.logicalHeight,
+                TagKey.create(Registry.BLOCK_REGISTRY, CraftNamespacedKey.toMinecraft(builder.infiniburn.getKey())),
+                CraftNamespacedKey.toMinecraft(builder.effectsLocation),
+                builder.ambientLight,
+                new DimensionType.MonsterSettings(
+                        builder.piglinSafe,
+                        builder.hasRaids,
+                        ConstantInt.of(builder.monsterSpawnLightTest),
+                        builder.monsterSpawnBlockLightLimit
+                )
+        );
+
+        Holder.Reference<DimensionType> holder = (Holder.Reference<DimensionType>) registryDimensions.register(resourceKeyDimension, dimensionType, Lifecycle.stable());
+
+        for (Method method : Holder.Reference.class.getDeclaredMethods()) {
+            if (method.getReturnType() == Void.class || method.getReturnType() == void.class) {
+                if (method.getParameterCount() == 1) {
+                    if (method.getGenericParameterTypes()[0] instanceof TypeVariable<?>) {
+                        method.setAccessible(true);
+                        try {
+                            method.invoke(holder, dimensionType);
+                        } catch (IllegalAccessException | InvocationTargetException e) {
+                            throw new RuntimeException(e);
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+
+        LevelStem stem = new LevelStem(
+                holder,
+                console.registryAccess()
+                        .registryOrThrow(Registry.LEVEL_STEM_REGISTRY)
+                        .get(LevelStem.OVERWORLD)
+                        .generator()
+        );
+
+        registryLevelStem.register(resourceKeyLevelStem, stem, Lifecycle.stable());
+
+        return new BukkitEnvironment(resourceKeyLevelStem, stem);
+    }
+
+    @Override
+    public BukkitEnvironmentBuilder copyEnvironment(BukkitEnvironment environment, BukkitEnvironmentBuilder builder) {
+        DimensionType dimensionType = ((CraftServer) Bukkit.getServer()).getServer()
+                .registryAccess()
+                .registryOrThrow(Registry.DIMENSION_TYPE_REGISTRY)
+                .get(((ResourceKey<LevelStem>) environment.getKey()).location());
+
+        OptionalLong fixedOptionLong = dimensionType.fixedTime();
+
+        builder.fixedTime = fixedOptionLong.isPresent() ? fixedOptionLong.getAsLong() : null;
+        builder.hasSkylight = dimensionType.hasSkyLight();
+        builder.hasCeiling = dimensionType.hasCeiling();
+        builder.ultraWarm = dimensionType.ultraWarm();
+        builder.natural = dimensionType.natural();
+        builder.coordinateScale = dimensionType.coordinateScale();
+        builder.piglinSafe = dimensionType.piglinSafe();
+        builder.bedWorks = dimensionType.bedWorks();
+        builder.respawnAnchorWorks = dimensionType.respawnAnchorWorks();
+        builder.hasRaids = dimensionType.hasRaids();
+        builder.minY = dimensionType.minY();
+        builder.height = dimensionType.height();
+        builder.logicalHeight = dimensionType.logicalHeight();
+        builder.ambientLight = dimensionType.ambientLight();
+
+        TagKey<Block> infinityBurn = dimensionType.infiniburn();
+        ResourceLocation infinityBurnLoc = infinityBurn.location();
+        ResourceLocation effectLoc = dimensionType.effectsLocation();
+
+        builder.infiniburn = Bukkit.getServer().getTag("blocks", new NamespacedKey(infinityBurnLoc.getNamespace(), infinityBurnLoc.getPath()), Material.class);
+        builder.effectsLocation = new NamespacedKey(effectLoc.getNamespace(), effectLoc.getPath());
+
+        return builder;
+    }
+
+    @Override
+    public Object worldLevelStemOverworld() {
+        return LevelStem.OVERWORLD;
+    }
+
+    @Override
+    public Object worldLevelStemNether() {
+        return LevelStem.NETHER;
+    }
+
+    @Override
+    public Object worldLevelStemTheEnd() {
+        return LevelStem.END;
     }
 
     @Override

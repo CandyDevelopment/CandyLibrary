@@ -8,7 +8,7 @@ import java.util.function.Consumer;
 
 public interface Creator {
 
-    void create(Plugin plugin, WorldCreator creator, Consumer<fit.d6.candy.api.world.World> consumer);
+    void create(Plugin plugin, WorldCreator creator, BukkitWorldInitializer initializer, Consumer<fit.d6.candy.api.world.World> consumer);
 
     static Creator getCreator() {
         return Ref.isFolia() ? new FoliaCreator() : new BukkitCreator();

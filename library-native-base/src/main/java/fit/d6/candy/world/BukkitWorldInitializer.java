@@ -1,6 +1,9 @@
 package fit.d6.candy.world;
 
+import fit.d6.candy.api.world.Environment;
+import fit.d6.candy.api.world.FlatSettings;
 import fit.d6.candy.api.world.WorldInitializer;
+import fit.d6.candy.exception.WorldException;
 import net.kyori.adventure.util.TriState;
 import org.bukkit.NamespacedKey;
 import org.bukkit.World;
@@ -16,6 +19,7 @@ import java.util.function.Consumer;
 public class BukkitWorldInitializer implements WorldInitializer {
 
     private final WorldCreator creator;
+    private Environment environment;
 
     public BukkitWorldInitializer(NamespacedKey name) {
         this.creator = new WorldCreator(name);
@@ -23,6 +27,10 @@ public class BukkitWorldInitializer implements WorldInitializer {
 
     public BukkitWorldInitializer(WorldCreator creator) {
         this.creator = creator;
+    }
+
+    public Environment getEnvironment() {
+        return environment;
     }
 
     @Override
@@ -34,6 +42,30 @@ public class BukkitWorldInitializer implements WorldInitializer {
     @Override
     public @NotNull WorldInitializer environment(World.@NotNull Environment environment) {
         this.creator.environment(environment);
+        switch (environment) {
+            case NORMAL -> {
+                this.environment(BukkitEnvironment.OVERWORLD);
+                break;
+            }
+            case NETHER -> {
+                this.environment(BukkitEnvironment.NETHER);
+                break;
+            }
+            case THE_END -> {
+                this.environment(BukkitEnvironment.THE_END);
+                break;
+            }
+            case CUSTOM -> {
+                throw new WorldException("Illegal world environment");
+            }
+        }
+        return this;
+    }
+
+    @Override
+    public @NotNull WorldInitializer environment(@NotNull Environment environment) {
+        // throw new UnderDevelopmentException("Still under development!");
+        this.environment = environment;
         return this;
     }
 
@@ -50,6 +82,12 @@ public class BukkitWorldInitializer implements WorldInitializer {
     }
 
     @Override
+    public @NotNull WorldInitializer generator(@NotNull String generator) {
+        this.creator.generator(generator);
+        return this;
+    }
+
+    @Override
     public @NotNull WorldInitializer biomeProvider(@NotNull BiomeProvider provider) {
         this.creator.biomeProvider(provider);
         return this;
@@ -59,6 +97,11 @@ public class BukkitWorldInitializer implements WorldInitializer {
     public @NotNull WorldInitializer generatorsSettings(@NotNull String generatorsSettings) {
         this.creator.generatorSettings(generatorsSettings);
         return this;
+    }
+
+    @Override
+    public @NotNull WorldInitializer generatorsSettings(@NotNull FlatSettings flatSettings) {
+        return this.generatorsSettings(flatSettings.toString());
     }
 
     @Override
@@ -81,7 +124,7 @@ public class BukkitWorldInitializer implements WorldInitializer {
 
     @Override
     public void initialize(@NotNull Plugin plugin, @NotNull Consumer<fit.d6.candy.api.world.@NotNull World> consumer) {
-        Creator.getCreator().create(plugin, this.creator, consumer);
+        Creator.getCreator().create(plugin, this.creator, this, consumer);
     }
 
 }

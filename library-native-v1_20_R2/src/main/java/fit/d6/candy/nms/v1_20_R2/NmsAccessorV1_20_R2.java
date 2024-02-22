@@ -2,6 +2,7 @@ package fit.d6.candy.nms.v1_20_R2;
 
 import com.destroystokyo.paper.profile.CraftPlayerProfile;
 import com.destroystokyo.paper.profile.PlayerProfile;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -31,6 +32,7 @@ import fit.d6.candy.api.protocol.packet.ClientboundDisconnectPacket;
 import fit.d6.candy.api.protocol.packet.Packet;
 import fit.d6.candy.api.visual.scoreboard.ScoreContent;
 import fit.d6.candy.api.visual.tablist.TabListContent;
+import fit.d6.candy.api.world.Environment;
 import fit.d6.candy.exception.PlayerException;
 import fit.d6.candy.exception.ProtocolException;
 import fit.d6.candy.exception.VisualException;
@@ -50,6 +52,9 @@ import fit.d6.candy.protocol.packet.BukkitClientboundPlayerChatPacket;
 import fit.d6.candy.visual.scoreboard.BukkitObjective;
 import fit.d6.candy.visual.scoreboard.BukkitScore;
 import fit.d6.candy.visual.scoreboard.BukkitScoreContent;
+import fit.d6.candy.world.BukkitEnvironment;
+import fit.d6.candy.world.BukkitEnvironmentBuilder;
+import fit.d6.candy.world.BukkitWorldInitializer;
 import io.netty.channel.Channel;
 import io.papermc.paper.adventure.PaperAdventure;
 import net.kyori.adventure.text.Component;
@@ -65,6 +70,10 @@ import net.minecraft.commands.arguments.coordinates.Vec3Argument;
 import net.minecraft.commands.arguments.item.ItemArgument;
 import net.minecraft.commands.arguments.item.ItemPredicateArgument;
 import net.minecraft.commands.synchronization.SuggestionProviders;
+import net.minecraft.core.Holder;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.core.MappedRegistry;
+import net.minecraft.core.WritableRegistry;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.Tag;
 import net.minecraft.nbt.*;
@@ -74,6 +83,7 @@ import net.minecraft.network.protocol.game.*;
 import net.minecraft.network.protocol.login.ClientboundGameProfilePacket;
 import net.minecraft.resources.RegistryOps;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.ReloadableServerResources;
 import net.minecraft.server.ServerScoreboard;
@@ -83,25 +93,28 @@ import net.minecraft.server.dedicated.DedicatedServerProperties;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.level.TicketType;
+import net.minecraft.tags.TagKey;
 import net.minecraft.util.GsonHelper;
 import net.minecraft.util.datafix.DataFixers;
+import net.minecraft.util.valueproviders.ConstantInt;
 import net.minecraft.world.Difficulty;
 import net.minecraft.world.entity.ai.village.VillageSiege;
 import net.minecraft.world.entity.npc.CatSpawner;
 import net.minecraft.world.entity.npc.WanderingTraderSpawner;
+import net.minecraft.world.flag.FeatureFlagSet;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.*;
-import net.minecraft.world.level.biome.BiomeManager;
+import net.minecraft.world.level.biome.*;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.dimension.DimensionType;
 import net.minecraft.world.level.dimension.LevelStem;
-import net.minecraft.world.level.levelgen.PatrolSpawner;
-import net.minecraft.world.level.levelgen.PhantomSpawner;
-import net.minecraft.world.level.levelgen.WorldDimensions;
-import net.minecraft.world.level.levelgen.WorldOptions;
+import net.minecraft.world.level.levelgen.*;
 import net.minecraft.world.level.storage.LevelStorageSource;
 import net.minecraft.world.level.storage.PrimaryLevelData;
 import net.minecraft.world.level.storage.WorldData;
+import net.minecraft.world.level.validation.ContentValidationException;
 import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.scores.Objective;
@@ -131,7 +144,6 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryCloseEvent;
-import org.bukkit.event.world.WorldLoadEvent;
 import org.bukkit.generator.BiomeProvider;
 import org.bukkit.generator.ChunkGenerator;
 import org.bukkit.generator.WorldInfo;
@@ -145,6 +157,9 @@ import org.slf4j.Logger;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.TypeVariable;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -960,7 +975,295 @@ public class NmsAccessorV1_20_R2 implements NmsAccessor {
     }
 
     @Override
-    public World createWorld(WorldCreator creator) {
+    public World createBukkitWorld(WorldCreator creator, BukkitWorldInitializer initializer) {
+        CraftServer craftServer = (CraftServer) Bukkit.getServer();
+        DedicatedServer console = craftServer.getServer();
+
+        Preconditions.checkState(console.getAllLevels().iterator().hasNext(), "Cannot create additional worlds on STARTUP");
+        //Preconditions.checkState(!console.isIteratingOverLevels, "Cannot create a world while worlds are being ticked"); // Paper - Cat - Temp disable. We'll see how this goes.
+        Preconditions.checkArgument(creator != null, "WorldCreator cannot be null");
+
+        String name = creator.name();
+
+        String levelName = console.getProperties().levelName;
+        ResourceKey<net.minecraft.world.level.Level> worldKey;
+        if (name.equals(levelName + "_nether")) {
+            worldKey = net.minecraft.world.level.Level.NETHER;
+        } else if (name.equals(levelName + "_the_end")) {
+            worldKey = net.minecraft.world.level.Level.END;
+        } else {
+            worldKey = ResourceKey.create(Registries.DIMENSION, new net.minecraft.resources.ResourceLocation(creator.key().getNamespace().toLowerCase(java.util.Locale.ENGLISH), creator.key().getKey().toLowerCase(java.util.Locale.ENGLISH))); // Paper
+        }
+
+        ChunkGenerator generator = creator.generator();
+        BiomeProvider biomeProvider = creator.biomeProvider();
+        File folder = new File(craftServer.getWorldContainer(), name);
+        World world = craftServer.getWorld(name);
+
+        CraftWorld worldByKey = (CraftWorld) craftServer.getWorld(creator.key());
+        if (world != null || worldByKey != null) {
+            if (world != worldByKey) {
+                throw new WorldException("World duplicated");
+            }
+        }
+
+        if ((folder.exists()) && (!folder.isDirectory())) {
+            throw new WorldException("Invalid world folder");
+        }
+
+        if (generator == null) {
+            generator = craftServer.getGenerator(name);
+        }
+
+        if (biomeProvider == null) {
+            biomeProvider = craftServer.getBiomeProvider(name);
+        }
+
+        ResourceKey<LevelStem> actualDimension;
+
+        if (initializer.getEnvironment() != null) {
+            actualDimension = (ResourceKey<LevelStem>) ((BukkitEnvironment) initializer.getEnvironment()).getKey();
+        } else {
+            actualDimension = switch (creator.environment()) {
+                case NORMAL -> LevelStem.OVERWORLD;
+                case NETHER -> LevelStem.NETHER;
+                case THE_END -> LevelStem.END;
+                default -> throw new WorldException("Illegal dimension");
+            };
+        }
+
+        LevelStorageSource.LevelStorageAccess worldSession;
+        try {
+            worldSession = LevelStorageSource.createDefault(craftServer.getWorldContainer().toPath()).validateAndCreateAccess(name, actualDimension);
+        } catch (IOException | ContentValidationException ex) {
+            throw new WorldException(ex);
+        }
+
+        boolean hardcore = creator.hardcore();
+
+        PrimaryLevelData worlddata;
+        WorldLoader.DataLoadContext worldloader_a = console.worldLoader;
+        net.minecraft.core.Registry<LevelStem> iregistry = worldloader_a.datapackDimensions().registryOrThrow(Registries.LEVEL_STEM);
+        DynamicOps<Tag> dynamicops = RegistryOps.create(NbtOps.INSTANCE, worldloader_a.datapackWorldgen());
+        Pair<WorldData, WorldDimensions.Complete> pair = worldSession.getDataTag(dynamicops, worldloader_a.dataConfiguration(), iregistry, worldloader_a.datapackWorldgen().allRegistriesLifecycle());
+
+        if (pair != null) {
+            worlddata = (PrimaryLevelData) pair.getFirst();
+            iregistry = pair.getSecond().dimensions();
+        } else {
+            LevelSettings worldsettings;
+            WorldOptions worldoptions = new WorldOptions(creator.seed(), creator.generateStructures(), false);
+            WorldDimensions worlddimensions;
+
+            DedicatedServerProperties.WorldDimensionData properties = new DedicatedServerProperties.WorldDimensionData(GsonHelper.parse((creator.generatorSettings().isEmpty()) ? "{}" : creator.generatorSettings()), creator.type().name().toLowerCase(Locale.ROOT));
+
+            worldsettings = new LevelSettings(name, GameType.byId(craftServer.getDefaultGameMode().getValue()), hardcore, Difficulty.EASY, false, new GameRules(), worldloader_a.dataConfiguration());
+            worlddimensions = properties.create(worldloader_a.datapackWorldgen());
+
+            WorldDimensions.Complete worlddimensions_b = worlddimensions.bake(iregistry);
+            Lifecycle lifecycle = worlddimensions_b.lifecycle().add(worldloader_a.datapackWorldgen().allRegistriesLifecycle());
+
+            worlddata = new PrimaryLevelData(worldsettings, worldoptions, worlddimensions_b.specialWorldProperty(), lifecycle);
+            iregistry = worlddimensions_b.dimensions();
+        }
+        worlddata.customDimensions = iregistry;
+        worlddata.checkName(name);
+        worlddata.setModdedInfo(console.getServerModName(), console.getModdedStatus().shouldReportAsModified());
+
+        // Paper - move down
+
+        long j = BiomeManager.obfuscateSeed(worlddata.worldGenOptions().seed()); // Paper - use world seed
+        List<CustomSpawner> list = ImmutableList.of(new PhantomSpawner(), new PatrolSpawner(), new CatSpawner(), new VillageSiege(), new WanderingTraderSpawner(worlddata));
+        // LevelStem worlddimension = iregistry.get(actualDimension);
+        LevelStem worlddimension = (LevelStem) ((BukkitEnvironment) initializer.getEnvironment()).getStem();
+
+        WorldInfo worldInfo = new CraftWorldInfo(worlddata, worldSession, creator.environment(), worlddimension.type().value(), worlddimension.generator(), console.registryAccess()); // Paper
+        if (biomeProvider == null && generator != null) {
+            biomeProvider = generator.getDefaultBiomeProvider(worldInfo);
+        }
+
+        // Paper start - fix and optimise world upgrading
+        if (console.options.has("forceUpgrade")) {
+            net.minecraft.server.Main.convertWorldButItWorks(
+                    actualDimension, worldSession, DataFixers.getDataFixer(), worlddimension.generator().getTypeNameForDataFixer(), console.options.has("eraseCache")
+            );
+        }
+        // Paper end - fix and optimise world upgrading
+
+        ServerLevel internal = new ServerLevel(console, console.executor, worldSession, worlddata, worldKey, worlddimension, console.progressListenerFactory.create(11),
+                worlddata.isDebugWorld(), j, creator.environment() == World.Environment.NORMAL ? list : ImmutableList.of(), true, console.overworld().getRandomSequences(), creator.environment(), generator, biomeProvider);
+        // internal.keepSpawnInMemory = creator.keepSpawnInMemory(); // Paper - replace
+
+        console.addLevel(internal); // Paper - move up
+        console.initWorld(internal, worlddata, worlddata, worlddata.worldGenOptions());
+
+        internal.setSpawnSettings(true, true);
+        // Paper - move up
+
+        internal.keepSpawnInMemory = creator.keepSpawnLoaded().toBooleanOrElse(internal.getWorld().getKeepSpawnInMemory()); // Paper
+        console.prepareLevels(internal.getChunkSource().chunkMap.progressListener, internal);
+        //internal.entityManager.tick(); // SPIGOT-6526: Load pending entities so they are available to the API // Paper - rewrite chunk system
+
+        return internal.getWorld();
+    }
+
+    @Override
+    public Environment registerEnvironment(BukkitEnvironmentBuilder builder) {
+        CraftServer craftServer = (CraftServer) Bukkit.getServer();
+        DedicatedServer console = craftServer.getServer();
+
+        ResourceKey<DimensionType> resourceKeyDimension = ResourceKey.create(Registries.DIMENSION_TYPE, CraftNamespacedKey.toMinecraft(builder.getKey()));
+        ResourceKey<LevelStem> resourceKeyLevelStem = ResourceKey.create(Registries.LEVEL_STEM, CraftNamespacedKey.toMinecraft(builder.getKey()));
+        WritableRegistry<DimensionType> registryDimensions = (WritableRegistry<DimensionType>) console.registryAccess().registryOrThrow(Registries.DIMENSION_TYPE);
+        WritableRegistry<LevelStem> registryLevelStems = (WritableRegistry<LevelStem>) console.registryAccess().registryOrThrow(Registries.LEVEL_STEM);
+
+        for (Field field : MappedRegistry.class.getDeclaredFields()) {
+            if (field.getType() != boolean.class)
+                continue;
+            field.setAccessible(true);
+            try {
+                field.set(registryDimensions, false);
+                field.set(registryLevelStems, false);
+            } catch (IllegalAccessException e) {
+                throw new WorldException(e);
+            }
+            break;
+        }
+
+        DimensionType dimensionType = new DimensionType(
+                builder.fixedTime == null ? OptionalLong.empty() : OptionalLong.of(builder.fixedTime),
+                builder.hasSkylight,
+                builder.hasCeiling,
+                builder.ultraWarm,
+                builder.natural,
+                builder.coordinateScale,
+                builder.bedWorks,
+                builder.respawnAnchorWorks,
+                builder.minY,
+                builder.height,
+                builder.logicalHeight,
+                TagKey.create(Registries.BLOCK, CraftNamespacedKey.toMinecraft(builder.infiniburn.getKey())),
+                CraftNamespacedKey.toMinecraft(builder.effectsLocation),
+                builder.ambientLight,
+                new DimensionType.MonsterSettings(
+                        builder.piglinSafe,
+                        builder.hasRaids,
+                        ConstantInt.of(builder.monsterSpawnLightTest),
+                        builder.monsterSpawnBlockLightLimit
+                )
+        );
+
+        Holder.Reference<DimensionType> holder = registryDimensions.register(resourceKeyDimension, dimensionType, Lifecycle.stable());
+
+        for (Method method : Holder.Reference.class.getDeclaredMethods()) {
+            if (method.getReturnType() == Void.class || method.getReturnType() == void.class) {
+                if (method.getParameterCount() == 1) {
+                    if (method.getGenericParameterTypes()[0] instanceof TypeVariable<?>) {
+                        method.setAccessible(true);
+                        try {
+                            method.invoke(holder, dimensionType);
+                        } catch (IllegalAccessException | InvocationTargetException e) {
+                            throw new RuntimeException(e);
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+
+
+        ResourceKey<NoiseGeneratorSettings> resourceKey;
+
+        if (builder.noiseSettings == null) {
+            if (builder.base == World.Environment.NETHER) {
+                resourceKey = NoiseGeneratorSettings.NETHER;
+            } else if (builder.base == World.Environment.THE_END) {
+                resourceKey = NoiseGeneratorSettings.END;
+            } else {
+                resourceKey = NoiseGeneratorSettings.OVERWORLD;
+            }
+        } else {
+            resourceKey = switch (builder.noiseSettings) {
+                default -> NoiseGeneratorSettings.OVERWORLD;
+                case LARGE_BIOMES -> NoiseGeneratorSettings.LARGE_BIOMES;
+                case AMPLIFIED -> NoiseGeneratorSettings.AMPLIFIED;
+                case NETHER -> NoiseGeneratorSettings.NETHER;
+                case END -> NoiseGeneratorSettings.END;
+                case CAVES -> NoiseGeneratorSettings.CAVES;
+                case FLOATING_ISLANDS -> NoiseGeneratorSettings.FLOATING_ISLANDS;
+            };
+        }
+
+        HolderLookup<Biome> biomeHolderGetter = console.registryAccess()
+                .registryOrThrow(Registries.BIOME)
+                .asLookup()
+                .filterFeatures(FeatureFlagSet.of());
+        MultiNoiseBiomeSourceParameterList parameterList = new MultiNoiseBiomeSourceParameterList(resourceKey == NoiseGeneratorSettings.NETHER ? MultiNoiseBiomeSourceParameterList.Preset.NETHER : MultiNoiseBiomeSourceParameterList.Preset.OVERWORLD, biomeHolderGetter);
+        BiomeSource biomeSource = MultiNoiseBiomeSource.createFromPreset(Holder.direct(parameterList));
+
+        NoiseBasedChunkGenerator chunkGenerator = new NoiseBasedChunkGenerator(biomeSource, console.registryAccess()
+                .registryOrThrow(Registries.NOISE_SETTINGS)
+                .getHolderOrThrow(resourceKey));
+
+        LevelStem levelStem = new LevelStem(holder, chunkGenerator);
+
+        Holder.Reference<LevelStem> levelStemHolder = registryLevelStems.register(resourceKeyLevelStem, levelStem, Lifecycle.stable());
+
+        for (Method method : Holder.Reference.class.getDeclaredMethods()) {
+            if (method.getReturnType() == Void.class || method.getReturnType() == void.class) {
+                if (method.getParameterCount() == 1) {
+                    if (method.getGenericParameterTypes()[0] instanceof TypeVariable<?>) {
+                        method.setAccessible(true);
+                        try {
+                            method.invoke(levelStemHolder, levelStem);
+                        } catch (IllegalAccessException | InvocationTargetException e) {
+                            throw new RuntimeException(e);
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+
+        return new BukkitEnvironment(resourceKeyLevelStem, levelStem);
+    }
+
+    @Override
+    public BukkitEnvironmentBuilder copyEnvironment(BukkitEnvironment environment, BukkitEnvironmentBuilder builder) {
+        DimensionType dimensionType = ((CraftServer) Bukkit.getServer()).getServer()
+                .registryAccess()
+                .registryOrThrow(Registries.DIMENSION_TYPE)
+                .get(((ResourceKey<LevelStem>) environment.getKey()).location());
+
+        OptionalLong fixedOptionLong = dimensionType.fixedTime();
+
+        builder.fixedTime = fixedOptionLong.isPresent() ? fixedOptionLong.getAsLong() : null;
+        builder.hasSkylight = dimensionType.hasSkyLight();
+        builder.hasCeiling = dimensionType.hasCeiling();
+        builder.ultraWarm = dimensionType.ultraWarm();
+        builder.natural = dimensionType.natural();
+        builder.coordinateScale = dimensionType.coordinateScale();
+        builder.piglinSafe = dimensionType.piglinSafe();
+        builder.bedWorks = dimensionType.bedWorks();
+        builder.respawnAnchorWorks = dimensionType.respawnAnchorWorks();
+        builder.hasRaids = dimensionType.hasRaids();
+        builder.minY = dimensionType.minY();
+        builder.height = dimensionType.height();
+        builder.logicalHeight = dimensionType.logicalHeight();
+        builder.ambientLight = dimensionType.ambientLight();
+
+        TagKey<Block> infinityBurn = dimensionType.infiniburn();
+        ResourceLocation infinityBurnLoc = infinityBurn.location();
+        ResourceLocation effectLoc = dimensionType.effectsLocation();
+
+        builder.infiniburn = Bukkit.getServer().getTag("blocks", new NamespacedKey(infinityBurnLoc.getNamespace(), infinityBurnLoc.getPath()), Material.class);
+        builder.effectsLocation = new NamespacedKey(effectLoc.getNamespace(), effectLoc.getPath());
+
+        return builder;
+    }
+
+    @Override
+    public World createFoliaWorld(WorldCreator creator, BukkitWorldInitializer initializer) {
         io.papermc.paper.threadedregions.RegionizedServer.ensureGlobalTickThread("World create can be done only on global tick thread");
         CraftServer craftServer = (CraftServer) Bukkit.getServer();
         DedicatedServer console = craftServer.getServer();
@@ -999,12 +1302,18 @@ public class NmsAccessorV1_20_R2 implements NmsAccessor {
             biomeProvider = craftServer.getBiomeProvider(name);
         }
 
-        ResourceKey<LevelStem> actualDimension = switch (creator.environment()) {
-            case NORMAL -> LevelStem.OVERWORLD;
-            case NETHER -> LevelStem.NETHER;
-            case THE_END -> LevelStem.END;
-            default -> throw new WorldException("Illegal dimension");
-        };
+        ResourceKey<LevelStem> actualDimension;
+
+        if (initializer.getEnvironment() != null) {
+            actualDimension = (ResourceKey<LevelStem>) ((BukkitEnvironment) initializer.getEnvironment()).getKey();
+        } else {
+            actualDimension = switch (creator.environment()) {
+                case NORMAL -> LevelStem.OVERWORLD;
+                case NETHER -> LevelStem.NETHER;
+                case THE_END -> LevelStem.END;
+                default -> throw new WorldException("Illegal dimension");
+            };
+        }
 
         LevelStorageSource.LevelStorageAccess worldSession;
         try {
@@ -1046,7 +1355,8 @@ public class NmsAccessorV1_20_R2 implements NmsAccessor {
 
         long j = BiomeManager.obfuscateSeed(creator.seed());
         List<CustomSpawner> list = ImmutableList.of(new PhantomSpawner(), new PatrolSpawner(), new CatSpawner(), new VillageSiege(), new WanderingTraderSpawner(worlddata));
-        LevelStem worlddimension = iregistry.get(actualDimension);
+        // LevelStem worlddimension = iregistry.get(actualDimension);
+        LevelStem worlddimension = (LevelStem) ((BukkitEnvironment) initializer.getEnvironment()).getStem();
 
         WorldInfo worldInfo = new CraftWorldInfo(worlddata, worldSession, creator.environment(), worlddimension.type().value(), worlddimension.generator(), craftServer.getHandle().getServer().registryAccess()); // Paper
         if (biomeProvider == null && generator != null) {
@@ -1082,9 +1392,27 @@ public class NmsAccessorV1_20_R2 implements NmsAccessor {
         internal.keepSpawnInMemory = creator.keepSpawnLoaded().toBooleanOrElse(internal.getWorld().getKeepSpawnInMemory()); // Paper
         io.papermc.paper.threadedregions.RegionizedServer.getInstance().addWorld(internal);
 
-        Bukkit.getPluginManager().callEvent(new WorldLoadEvent(internal.getWorld()));
-
         return internal.getWorld();
+    }
+
+    @Override
+    public Object worldLevelStemOverworld() {
+        return LevelStem.OVERWORLD;
+    }
+
+    @Override
+    public Object worldLevelStemNether() {
+        return LevelStem.NETHER;
+    }
+
+    @Override
+    public Object worldLevelStemTheEnd() {
+        return LevelStem.END;
+    }
+
+    @Override
+    public Object worldLevelStem(Object key) {
+        return ((CraftServer) Bukkit.getServer()).getServer().registryAccess().registryOrThrow(Registries.LEVEL_STEM).get((ResourceKey<LevelStem>) key);
     }
 
     @Override

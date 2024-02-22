@@ -1,6 +1,7 @@
 package fit.d6.candy;
 
 import fit.d6.candy.api.CandyLibrary;
+import fit.d6.candy.api.CandyVersion;
 import fit.d6.candy.api.Service;
 import fit.d6.candy.api.collection.CollectionService;
 import fit.d6.candy.api.command.CommandService;
@@ -52,7 +53,7 @@ public class CandyLibraryPlugin extends JavaPlugin implements CandyLibrary {
     private final Map<Class<?>, Service> services = new HashMap<>();
 
     private boolean isUnsupported = false;
-    private boolean isHigherThan1_20;
+    private CandyVersion candyVersion;
 
     private NmsAccessor accessor;
 
@@ -65,34 +66,33 @@ public class CandyLibraryPlugin extends JavaPlugin implements CandyLibrary {
         } else {
             if (Ref.getObcVersion().equals("1_20_R3")) {
                 this.accessor = new NmsAccessorV1_20_R3();
-                isHigherThan1_20 = true;
+                candyVersion = CandyVersion.V1_20_R3;
             } else if (Ref.getObcVersion().equals("1_20_R2")) {
                 this.accessor = new NmsAccessorV1_20_R2();
-                isHigherThan1_20 = true;
+                candyVersion = CandyVersion.V1_20_R2;
             } else if (Ref.getObcVersion().equals("1_20_R1")) {
                 this.accessor = new NmsAccessorV1_20_R1();
-                isHigherThan1_20 = false;
+                candyVersion = CandyVersion.V1_20_R1;
             } else if (Ref.getObcVersion().equals("1_19_R3")) {
                 this.accessor = new NmsAccessorV1_19_R3();
-                isHigherThan1_20 = false;
+                candyVersion = CandyVersion.V1_19_R3;
             } else if (Ref.getObcVersion().equals("1_19_R2")) {
                 this.accessor = new NmsAccessorV1_19_R2();
-                isHigherThan1_20 = false;
+                candyVersion = CandyVersion.V1_19_R2;
             } else if (Ref.getObcVersion().equals("1_19_R1")) {
                 this.accessor = new NmsAccessorV1_19_R1();
-                isHigherThan1_20 = false;
+                candyVersion = CandyVersion.V1_19_R1;
             } else if (Ref.getObcVersion().equals("1_18_R2")) {
                 this.accessor = new NmsAccessorV1_18_R2();
-                isHigherThan1_20 = false;
+                candyVersion = CandyVersion.V1_18_R2;
             } else if (Ref.getObcVersion().equals("1_18_R1")) {
                 this.accessor = new NmsAccessorV1_18_R1();
-                isHigherThan1_20 = false;
+                candyVersion = CandyVersion.V1_18_R1;
             } else if (Ref.getObcVersion().equals("1_17_R1")) {
                 this.accessor = new NmsAccessorV1_17_R1();
-                isHigherThan1_20 = false;
+                candyVersion = CandyVersion.V1_17_R1;
             } else {
                 isUnsupported = true;
-                isHigherThan1_20 = false;
                 return;
             }
         }
@@ -108,7 +108,7 @@ public class CandyLibraryPlugin extends JavaPlugin implements CandyLibrary {
         this.services.put(DatabaseService.class, new BukkitDatabaseService());
         this.services.put(ItemService.class, new BukkitItemService());
         this.services.put(TimeService.class, new BukkitTimeService());
-        this.services.put(SchedulerService.class, new BukkitSchedulerService(this.isHigherThan1_20));
+        this.services.put(SchedulerService.class, new BukkitSchedulerService(this.candyVersion.isFoliaSchedulerSupport()));
         this.services.put(WorldService.class, new BukkitWorldService());
         this.services.put(NmsAccessor.class, this.accessor);
 

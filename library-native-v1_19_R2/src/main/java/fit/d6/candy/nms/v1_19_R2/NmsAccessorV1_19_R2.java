@@ -15,6 +15,7 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.mojang.brigadier.tree.CommandNode;
+import com.mojang.serialization.Lifecycle;
 import fit.d6.candy.api.gui.anvil.AnvilGuiScene;
 import fit.d6.candy.api.item.BlockInput;
 import fit.d6.candy.api.item.ItemInput;
@@ -27,9 +28,11 @@ import fit.d6.candy.api.protocol.packet.ClientboundDisconnectPacket;
 import fit.d6.candy.api.protocol.packet.Packet;
 import fit.d6.candy.api.visual.scoreboard.ScoreContent;
 import fit.d6.candy.api.visual.tablist.TabListContent;
+import fit.d6.candy.api.world.Environment;
 import fit.d6.candy.exception.CommandException;
 import fit.d6.candy.exception.PlayerException;
 import fit.d6.candy.exception.ProtocolException;
+import fit.d6.candy.exception.WorldException;
 import fit.d6.candy.gui.BukkitAnvilGuiScene;
 import fit.d6.candy.nms.FakeAnvil;
 import fit.d6.candy.nms.NmsAccessor;
@@ -45,6 +48,9 @@ import fit.d6.candy.protocol.packet.BukkitClientboundPlayerChatPacket;
 import fit.d6.candy.visual.scoreboard.BukkitObjective;
 import fit.d6.candy.visual.scoreboard.BukkitScore;
 import fit.d6.candy.visual.scoreboard.BukkitScoreContent;
+import fit.d6.candy.world.BukkitEnvironment;
+import fit.d6.candy.world.BukkitEnvironmentBuilder;
+import fit.d6.candy.world.BukkitWorldInitializer;
 import io.netty.channel.Channel;
 import io.papermc.paper.adventure.PaperAdventure;
 import net.kyori.adventure.text.Component;
@@ -60,20 +66,38 @@ import net.minecraft.commands.arguments.coordinates.Vec3Argument;
 import net.minecraft.commands.arguments.item.ItemArgument;
 import net.minecraft.commands.arguments.item.ItemPredicateArgument;
 import net.minecraft.commands.synchronization.SuggestionProviders;
+import net.minecraft.core.Holder;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.core.MappedRegistry;
+import net.minecraft.core.WritableRegistry;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.*;
 import net.minecraft.network.Connection;
 import net.minecraft.network.chat.SignedMessageBody;
 import net.minecraft.network.protocol.game.*;
 import net.minecraft.network.protocol.login.ClientboundGameProfilePacket;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.ReloadableServerResources;
 import net.minecraft.server.ServerScoreboard;
+import net.minecraft.server.dedicated.DedicatedServer;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.tags.TagKey;
+import net.minecraft.util.valueproviders.ConstantInt;
+import net.minecraft.world.flag.FeatureFlagSet;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.GameType;
+import net.minecraft.world.level.biome.Biome;
+import net.minecraft.world.level.biome.BiomeSource;
+import net.minecraft.world.level.biome.MultiNoiseBiomeSource;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.dimension.DimensionType;
+import net.minecraft.world.level.dimension.LevelStem;
+import net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator;
+import net.minecraft.world.level.levelgen.NoiseGeneratorSettings;
 import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.scores.Objective;
@@ -85,12 +109,12 @@ import org.bukkit.*;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.command.CommandSender;
 import org.bukkit.craftbukkit.v1_19_R2.CraftParticle;
+import org.bukkit.craftbukkit.v1_19_R2.CraftServer;
 import org.bukkit.craftbukkit.v1_19_R2.command.VanillaCommandWrapper;
 import org.bukkit.craftbukkit.v1_19_R2.entity.CraftPlayer;
 import org.bukkit.craftbukkit.v1_19_R2.event.CraftEventFactory;
 import org.bukkit.craftbukkit.v1_19_R2.inventory.CraftContainer;
 import org.bukkit.craftbukkit.v1_19_R2.inventory.CraftItemStack;
-import org.bukkit.craftbukkit.v1_19_R2.potion.CraftPotionEffectType;
 import org.bukkit.craftbukkit.v1_19_R2.util.CraftNamespacedKey;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Entity;
@@ -104,9 +128,7 @@ import org.bukkit.util.Vector;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
+import java.lang.reflect.*;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -361,7 +383,7 @@ public class NmsAccessorV1_19_R2 implements NmsAccessor {
 
     @Override
     public Enchantment getArgumentEnchantment(Object context, String name) throws CommandSyntaxException {
-        return Enchantment.getByKey(CraftNamespacedKey.fromMinecraft(ResourceArgument.getEnchantment(((CommandContext<CommandSourceStack>) context), name).key().location()));
+        return Registry.ENCHANTMENT.get(CraftNamespacedKey.fromMinecraft(ResourceArgument.getEnchantment(((CommandContext<CommandSourceStack>) context), name).key().location()));
     }
 
     @Override
@@ -376,7 +398,7 @@ public class NmsAccessorV1_19_R2 implements NmsAccessor {
 
     @Override
     public PotionEffectType getArgumentPotionEffectType(Object context, String name) throws CommandSyntaxException {
-        return CraftPotionEffectType.getByKey(CraftNamespacedKey.fromMinecraft(ResourceArgument.getMobEffect(((CommandContext<CommandSourceStack>) context), name).key().location()));
+        return Registry.POTION_EFFECT_TYPE.get(CraftNamespacedKey.fromMinecraft(ResourceArgument.getMobEffect(((CommandContext<CommandSourceStack>) context), name).key().location()));
     }
 
     @Override
@@ -924,6 +946,178 @@ public class NmsAccessorV1_19_R2 implements NmsAccessor {
     public Rotation getArgumentRotation(Object context, String name) {
         Vec2 vec2 = RotationArgument.getRotation(((CommandContext<CommandSourceStack>) context), name).getRotation(((CommandContext<CommandSourceStack>) context).getSource());
         return new BukkitRotation(vec2.y, vec2.x);
+    }
+
+    @Override
+    public World createBukkitWorld(WorldCreator creator, BukkitWorldInitializer initializer) {
+        return creator.createWorld();
+    }
+
+    @Override
+    public Environment registerEnvironment(BukkitEnvironmentBuilder builder) {
+        CraftServer craftServer = (CraftServer) Bukkit.getServer();
+        DedicatedServer console = craftServer.getServer();
+
+        ResourceKey<DimensionType> resourceKeyDimension = ResourceKey.create(Registries.DIMENSION_TYPE, CraftNamespacedKey.toMinecraft(builder.getKey()));
+        ResourceKey<LevelStem> resourceKeyLevelStem = ResourceKey.create(Registries.LEVEL_STEM, CraftNamespacedKey.toMinecraft(builder.getKey()));
+        WritableRegistry<DimensionType> registryDimensions = (WritableRegistry<DimensionType>) console.registryAccess().registryOrThrow(Registries.DIMENSION_TYPE);
+        WritableRegistry<LevelStem> registryLevelStems = (WritableRegistry<LevelStem>) console.registryAccess().registryOrThrow(Registries.LEVEL_STEM);
+
+        for (Field field : MappedRegistry.class.getDeclaredFields()) {
+            if (field.getType() != boolean.class)
+                continue;
+            field.setAccessible(true);
+            try {
+                field.set(registryDimensions, false);
+                field.set(registryLevelStems, false);
+            } catch (IllegalAccessException e) {
+                throw new WorldException(e);
+            }
+            break;
+        }
+
+        DimensionType dimensionType = new DimensionType(
+                builder.fixedTime == null ? OptionalLong.empty() : OptionalLong.of(builder.fixedTime),
+                builder.hasSkylight,
+                builder.hasCeiling,
+                builder.ultraWarm,
+                builder.natural,
+                builder.coordinateScale,
+                builder.bedWorks,
+                builder.respawnAnchorWorks,
+                builder.minY,
+                builder.height,
+                builder.logicalHeight,
+                TagKey.create(Registries.BLOCK, CraftNamespacedKey.toMinecraft(builder.infiniburn.getKey())),
+                CraftNamespacedKey.toMinecraft(builder.effectsLocation),
+                builder.ambientLight,
+                new DimensionType.MonsterSettings(
+                        builder.piglinSafe,
+                        builder.hasRaids,
+                        ConstantInt.of(builder.monsterSpawnLightTest),
+                        builder.monsterSpawnBlockLightLimit
+                )
+        );
+
+        Holder.Reference<DimensionType> holder = registryDimensions.register(resourceKeyDimension, dimensionType, Lifecycle.stable());
+
+        for (Method method : Holder.Reference.class.getDeclaredMethods()) {
+            if (method.getReturnType() == Void.class || method.getReturnType() == void.class) {
+                if (method.getParameterCount() == 1) {
+                    if (method.getGenericParameterTypes()[0] instanceof TypeVariable<?>) {
+                        method.setAccessible(true);
+                        try {
+                            method.invoke(holder, dimensionType);
+                        } catch (IllegalAccessException | InvocationTargetException e) {
+                            throw new RuntimeException(e);
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+
+        HolderLookup<Biome> biomeHolderGetter = console.registryAccess()
+                .registryOrThrow(Registries.BIOME)
+                .asLookup()
+                .filterFeatures(FeatureFlagSet.of());
+        BiomeSource biomeSource = MultiNoiseBiomeSource.Preset.OVERWORLD.biomeSource(biomeHolderGetter);
+
+        ResourceKey<NoiseGeneratorSettings> resourceKey;
+
+        if (builder.noiseSettings == null) {
+            if (builder.base == World.Environment.NETHER) {
+                resourceKey = NoiseGeneratorSettings.NETHER;
+            } else if (builder.base == World.Environment.THE_END) {
+                resourceKey = NoiseGeneratorSettings.END;
+            } else {
+                resourceKey = NoiseGeneratorSettings.OVERWORLD;
+            }
+        } else {
+            resourceKey = switch (builder.noiseSettings) {
+                default -> NoiseGeneratorSettings.OVERWORLD;
+                case LARGE_BIOMES -> NoiseGeneratorSettings.LARGE_BIOMES;
+                case AMPLIFIED -> NoiseGeneratorSettings.AMPLIFIED;
+                case NETHER -> NoiseGeneratorSettings.NETHER;
+                case END -> NoiseGeneratorSettings.END;
+                case CAVES -> NoiseGeneratorSettings.CAVES;
+                case FLOATING_ISLANDS -> NoiseGeneratorSettings.FLOATING_ISLANDS;
+            };
+        }
+        NoiseBasedChunkGenerator chunkGenerator = new NoiseBasedChunkGenerator(biomeSource, console.registryAccess()
+                .registryOrThrow(Registries.NOISE_SETTINGS)
+                .getHolderOrThrow(resourceKey));
+
+        LevelStem levelStem = new LevelStem(holder, chunkGenerator);
+
+        Holder.Reference<LevelStem> levelStemHolder = registryLevelStems.register(resourceKeyLevelStem, levelStem, Lifecycle.stable());
+
+        for (Method method : Holder.Reference.class.getDeclaredMethods()) {
+            if (method.getReturnType() == Void.class || method.getReturnType() == void.class) {
+                if (method.getParameterCount() == 1) {
+                    if (method.getGenericParameterTypes()[0] instanceof TypeVariable<?>) {
+                        method.setAccessible(true);
+                        try {
+                            method.invoke(levelStemHolder, levelStem);
+                        } catch (IllegalAccessException | InvocationTargetException e) {
+                            throw new RuntimeException(e);
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+
+        return new BukkitEnvironment(resourceKeyLevelStem, levelStem);
+    }
+
+    @Override
+    public BukkitEnvironmentBuilder copyEnvironment(BukkitEnvironment environment, BukkitEnvironmentBuilder builder) {
+        DimensionType dimensionType = ((CraftServer) Bukkit.getServer()).getServer()
+                .registryAccess()
+                .registryOrThrow(Registries.DIMENSION_TYPE)
+                .get(((ResourceKey<LevelStem>) environment.getKey()).location());
+
+        OptionalLong fixedOptionLong = dimensionType.fixedTime();
+
+        builder.fixedTime = fixedOptionLong.isPresent() ? fixedOptionLong.getAsLong() : null;
+        builder.hasSkylight = dimensionType.hasSkyLight();
+        builder.hasCeiling = dimensionType.hasCeiling();
+        builder.ultraWarm = dimensionType.ultraWarm();
+        builder.natural = dimensionType.natural();
+        builder.coordinateScale = dimensionType.coordinateScale();
+        builder.piglinSafe = dimensionType.piglinSafe();
+        builder.bedWorks = dimensionType.bedWorks();
+        builder.respawnAnchorWorks = dimensionType.respawnAnchorWorks();
+        builder.hasRaids = dimensionType.hasRaids();
+        builder.minY = dimensionType.minY();
+        builder.height = dimensionType.height();
+        builder.logicalHeight = dimensionType.logicalHeight();
+        builder.ambientLight = dimensionType.ambientLight();
+
+        TagKey<Block> infinityBurn = dimensionType.infiniburn();
+        ResourceLocation infinityBurnLoc = infinityBurn.location();
+        ResourceLocation effectLoc = dimensionType.effectsLocation();
+
+        builder.infiniburn = Bukkit.getServer().getTag("blocks", new NamespacedKey(infinityBurnLoc.getNamespace(), infinityBurnLoc.getPath()), Material.class);
+        builder.effectsLocation = new NamespacedKey(effectLoc.getNamespace(), effectLoc.getPath());
+
+        return builder;
+    }
+
+    @Override
+    public Object worldLevelStemOverworld() {
+        return LevelStem.OVERWORLD;
+    }
+
+    @Override
+    public Object worldLevelStemNether() {
+        return LevelStem.NETHER;
+    }
+
+    @Override
+    public Object worldLevelStemTheEnd() {
+        return LevelStem.END;
     }
 
     @Override
