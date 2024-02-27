@@ -25,7 +25,6 @@ import org.bukkit.World;
 import org.bukkit.WorldType;
 import org.bukkit.block.Biome;
 import org.bukkit.event.player.PlayerDropItemEvent;
-import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;

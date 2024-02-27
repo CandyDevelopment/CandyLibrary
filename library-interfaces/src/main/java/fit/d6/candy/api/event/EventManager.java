@@ -5,7 +5,6 @@ import org.jetbrains.annotations.NotNull;
 
 public interface EventManager {
 
-    @NotNull
-    <E extends Event> EventListenerBuilder<E> subscribe(Class<E> eventType);
+    @NotNull <E extends Event> EventListenerBuilder<E> subscribe(Class<E> eventType);
 
 }

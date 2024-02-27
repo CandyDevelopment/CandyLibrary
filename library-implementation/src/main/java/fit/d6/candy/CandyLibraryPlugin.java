@@ -6,6 +6,7 @@ import fit.d6.candy.api.Service;
 import fit.d6.candy.api.collection.CollectionService;
 import fit.d6.candy.api.command.CommandService;
 import fit.d6.candy.api.configuration.ConfigurationService;
+import fit.d6.candy.api.configuration.ConfigurationType;
 import fit.d6.candy.api.database.DatabaseService;
 import fit.d6.candy.api.event.EventService;
 import fit.d6.candy.api.gui.GuiService;
@@ -47,6 +48,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -99,20 +101,45 @@ public class CandyLibraryPlugin extends JavaPlugin implements CandyLibrary {
             }
         }
 
-        this.services.put(GuiService.class, new BukkitGuiService());
-        this.services.put(CommandService.class, new BukkitCommandService());
-        this.services.put(ConfigurationService.class, new BukkitConfigurationService());
-        this.services.put(NbtService.class, new BukkitNbtService());
-        this.services.put(VisualService.class, new BukkitVisualService());
-        this.services.put(PlayerService.class, new BukkitPlayerService());
-        this.services.put(ProtocolService.class, new BukkitProtocolService());
-        this.services.put(CollectionService.class, new BukkitCollectionService());
-        this.services.put(DatabaseService.class, new BukkitDatabaseService());
-        this.services.put(ItemService.class, new BukkitItemService());
-        this.services.put(TimeService.class, new BukkitTimeService());
-        this.services.put(SchedulerService.class, new BukkitSchedulerService(this.candyVersion.isFoliaSchedulerSupport()));
-        this.services.put(WorldService.class, new BukkitWorldService());
-        this.services.put(EventService.class, new BukkitEventService());
+        if (!this.getDataFolder().isDirectory())
+            this.getDataFolder().mkdirs();
+
+        File configFile = new File(this.getDataFolder(), "config.yml");
+
+        if (!configFile.isFile())
+            new BukkitConfigurationService().save(new CandyLibraryConfiguration(), configFile, ConfigurationType.YAML);
+
+        CandyLibraryConfiguration configuration = (CandyLibraryConfiguration) new BukkitConfigurationService().load(CandyLibraryConfiguration.class, configFile, ConfigurationType.YAML);
+        new BukkitConfigurationService().save(configuration, configFile, ConfigurationType.YAML);
+
+        if (configuration.gui)
+            this.services.put(GuiService.class, new BukkitGuiService());
+        if (configuration.command)
+            this.services.put(CommandService.class, new BukkitCommandService());
+        if (configuration.configuration)
+            this.services.put(ConfigurationService.class, new BukkitConfigurationService());
+        if (configuration.nbt)
+            this.services.put(NbtService.class, new BukkitNbtService());
+        if (configuration.visual)
+            this.services.put(VisualService.class, new BukkitVisualService());
+        if (configuration.player)
+            this.services.put(PlayerService.class, new BukkitPlayerService());
+        if (configuration.protocol)
+            this.services.put(ProtocolService.class, new BukkitProtocolService());
+        if (configuration.collection)
+            this.services.put(CollectionService.class, new BukkitCollectionService());
+        if (configuration.database)
+            this.services.put(DatabaseService.class, new BukkitDatabaseService());
+        if (configuration.item)
+            this.services.put(ItemService.class, new BukkitItemService());
+        if (configuration.time)
+            this.services.put(TimeService.class, new BukkitTimeService());
+        if (configuration.scheduler)
+            this.services.put(SchedulerService.class, new BukkitSchedulerService(this.candyVersion.isFoliaSchedulerSupport()));
+        if (configuration.world)
+            this.services.put(WorldService.class, new BukkitWorldService());
+        if (configuration.event)
+            this.services.put(EventService.class, new BukkitEventService());
         this.services.put(NmsAccessor.class, this.accessor);
 
         this.services.values().forEach(service -> {
@@ -149,6 +176,11 @@ public class CandyLibraryPlugin extends JavaPlugin implements CandyLibrary {
         if (!this.services.containsKey(clazz))
             throw new ServiceNotExistsException("The service is not registered or not exists");
         return (S) this.services.get(clazz);
+    }
+
+    @Override
+    public <S extends Service> boolean isServiceConfigured(@NotNull Class<S> clazz) {
+        return this.services.containsKey(clazz);
     }
 
     @Override
