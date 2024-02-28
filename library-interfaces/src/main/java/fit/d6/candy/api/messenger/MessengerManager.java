@@ -7,8 +7,15 @@ import fit.d6.candy.api.messenger.server.ServerOptions;
 import org.jetbrains.annotations.NotNull;
 
 import java.net.InetAddress;
+import java.net.URI;
 
 public interface MessengerManager {
+
+    @NotNull
+    SimpleAddress address(@NotNull InetAddress address, int port);
+
+    @NotNull
+    WebSocketAddress address(@NotNull URI url);
 
     @NotNull
     ClientOptions clientOptions();
@@ -17,7 +24,7 @@ public interface MessengerManager {
     ServerOptions serverOptions();
 
     @NotNull
-    MessengerClient client(int conv, @NotNull InetAddress address, int port, @NotNull ClientOptions options);
+    MessengerClient client(int conv, @NotNull ClientOptions options);
 
     @NotNull
     MessengerServer server(int port, @NotNull ServerOptions options);

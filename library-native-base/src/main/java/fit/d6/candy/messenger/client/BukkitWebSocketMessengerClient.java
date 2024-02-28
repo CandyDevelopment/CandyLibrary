@@ -2,14 +2,14 @@ package fit.d6.candy.messenger.client;
 
 import fit.d6.candy.api.messenger.Connection;
 import fit.d6.candy.api.messenger.MessengerProtocol;
+import fit.d6.candy.api.messenger.WebSocketAddress;
 import fit.d6.candy.api.messenger.client.MessengerClient;
 import fit.d6.candy.api.messenger.client.MessengerClientCloser;
 import fit.d6.candy.api.messenger.client.MessengerClientConnector;
 import fit.d6.candy.api.messenger.client.MessengerClientReceiver;
 import fit.d6.candy.api.messenger.packet.Packet;
 import fit.d6.candy.messenger.BukkitPacketManager;
-import fit.d6.candy.messenger.BukkitSimpleAddress;
-import fit.d6.candy.messenger.BukkitTcpConnection;
+import fit.d6.candy.messenger.BukkitWebSocketConnection;
 import fit.d6.candy.messenger.packet.BukkitReadablePacketContent;
 import fit.d6.candy.messenger.packet.ClosePacket;
 import fit.d6.candy.messenger.packet.PingPacket;
@@ -19,17 +19,24 @@ import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.handler.codec.http.DefaultHttpHeaders;
+import io.netty.handler.codec.http.HttpClientCodec;
+import io.netty.handler.codec.http.HttpObjectAggregator;
+import io.netty.handler.codec.http.websocketx.*;
+import io.netty.handler.stream.ChunkedWriteHandler;
 import org.jetbrains.annotations.NotNull;
 
 import java.net.InetSocketAddress;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.util.Objects;
 import java.util.Timer;
 import java.util.TimerTask;
 
-public class BukkitTcpMessengerClient extends ChannelInboundHandlerAdapter implements MessengerClient {
+public class BukkitWebSocketMessengerClient extends ChannelInboundHandlerAdapter implements MessengerClient {
 
     private final EventLoopGroup group = new NioEventLoopGroup();
-    private final BukkitTcpConnection connection;
+    private final BukkitWebSocketConnection connection;
 
     private final Timer timer = new Timer();
 
@@ -37,10 +44,12 @@ public class BukkitTcpMessengerClient extends ChannelInboundHandlerAdapter imple
     private final MessengerClientReceiver receiver;
     private final MessengerClientCloser closer;
 
-    public BukkitTcpMessengerClient(BukkitClientOptions options) {
+    public BukkitWebSocketMessengerClient(BukkitClientOptions options) {
         this.connector = options.getConnector();
         this.receiver = options.getReceiver();
         this.closer = options.getCloser();
+
+        URI uri = ((WebSocketAddress) options.getAddress()).getUri();
 
         Bootstrap bootstrap = new Bootstrap();
         bootstrap.group(this.group)
@@ -53,13 +62,17 @@ public class BukkitTcpMessengerClient extends ChannelInboundHandlerAdapter imple
                 .handler(new ChannelInitializer<SocketChannel>() {
                     @Override
                     protected void initChannel(SocketChannel channel) throws Exception {
-                        channel.pipeline().addLast(BukkitTcpMessengerClient.this);
+                        channel.pipeline()
+                                .addLast(new HttpClientCodec())
+                                .addLast(new ChunkedWriteHandler())
+                                .addLast(new HttpObjectAggregator(65536))
+                                .addLast(new WebSocketClientProtocolHandler(WebSocketClientHandshakerFactory.newHandshaker(uri, WebSocketVersion.V13, null, false, new DefaultHttpHeaders())))
+                                .addLast(BukkitWebSocketMessengerClient.this);
                     }
                 });
 
         try {
-            BukkitSimpleAddress address = (BukkitSimpleAddress) options.getAddress();
-            this.connection = new BukkitTcpConnection(bootstrap.connect(new InetSocketAddress(address.getHost(), address.getPort())).sync().channel());
+            this.connection = new BukkitWebSocketConnection(bootstrap.connect(new InetSocketAddress(uri.getHost(), uri.getPort())).sync().channel());
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
@@ -70,6 +83,7 @@ public class BukkitTcpMessengerClient extends ChannelInboundHandlerAdapter imple
                 public void run() {
                     try {
                         connection.send(new PingPacket());
+                        connection.getChannel().writeAndFlush(new PingWebSocketFrame());
                     } catch (Exception e) {
                         close();
                     }
@@ -79,13 +93,16 @@ public class BukkitTcpMessengerClient extends ChannelInboundHandlerAdapter imple
     }
 
     @Override
-    public void channelActive(ChannelHandlerContext ctx) throws Exception {
-        this.connector.connect(this, this.connection);
+    public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
+        if (Objects.equals(evt, WebSocketClientProtocolHandler.ClientHandshakeStateEvent.HANDSHAKE_COMPLETE)) {
+            this.connector.connect(this, this.connection);
+        }
     }
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-        if (msg instanceof ByteBuf byteBuf) {
+        if (msg instanceof BinaryWebSocketFrame webSocketFrame) {
+            ByteBuf byteBuf = webSocketFrame.content();
             int packetIdLength = byteBuf.readInt();
             String packetId = byteBuf.readCharSequence(packetIdLength, StandardCharsets.UTF_8).toString();
             Packet packet = BukkitPacketManager.tryToParse(packetId, new BukkitReadablePacketContent(byteBuf));
@@ -108,7 +125,7 @@ public class BukkitTcpMessengerClient extends ChannelInboundHandlerAdapter imple
 
     @Override
     public @NotNull MessengerProtocol getProtocol() {
-        return MessengerProtocol.TCP;
+        return MessengerProtocol.WEBSOCKET;
     }
 
     @Override

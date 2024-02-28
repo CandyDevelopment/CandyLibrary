@@ -7,8 +7,9 @@ import fit.d6.candy.api.messenger.client.MessengerClientCloser;
 import fit.d6.candy.api.messenger.client.MessengerClientConnector;
 import fit.d6.candy.api.messenger.client.MessengerClientReceiver;
 import fit.d6.candy.api.messenger.packet.Packet;
-import fit.d6.candy.messenger.BukkitConnection;
+import fit.d6.candy.messenger.BukkitKcpConnection;
 import fit.d6.candy.messenger.BukkitPacketManager;
+import fit.d6.candy.messenger.BukkitSimpleAddress;
 import fit.d6.candy.messenger.packet.BukkitReadablePacketContent;
 import fit.d6.candy.messenger.packet.ClosePacket;
 import fit.d6.candy.messenger.packet.PingPacket;
@@ -19,7 +20,6 @@ import kcp.KcpListener;
 import kcp.Ukcp;
 import org.jetbrains.annotations.NotNull;
 
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.util.Timer;
@@ -29,13 +29,13 @@ public class BukkitKcpMessengerClient implements KcpListener, MessengerClient {
 
     private final KcpClient kcpClient = new KcpClient();
     private final Timer timer = new Timer();
-    private final BukkitConnection connection;
+    private final BukkitKcpConnection connection;
 
     private final MessengerClientConnector connector;
     private final MessengerClientReceiver receiver;
     private final MessengerClientCloser closer;
 
-    public BukkitKcpMessengerClient(int conv, InetAddress address, int port, BukkitClientOptions options) {
+    public BukkitKcpMessengerClient(int conv, BukkitClientOptions options) {
         this.connector = options.getConnector();
         this.receiver = options.getReceiver();
         this.closer = options.getCloser();
@@ -54,7 +54,9 @@ public class BukkitKcpMessengerClient implements KcpListener, MessengerClient {
         channelConfig.setTimeoutMillis(10000);
 
         kcpClient.init(channelConfig);
-        this.connection = new BukkitConnection(kcpClient.connect(new InetSocketAddress(address, port), channelConfig, this));
+
+        BukkitSimpleAddress address = (BukkitSimpleAddress) options.getAddress();
+        this.connection = new BukkitKcpConnection(kcpClient.connect(new InetSocketAddress(address.getHost(), address.getPort()), channelConfig, this));
         if (options.isKeepalive()) {
             timer.scheduleAtFixedRate(new TimerTask() {
                 @Override
@@ -71,7 +73,7 @@ public class BukkitKcpMessengerClient implements KcpListener, MessengerClient {
 
     @Override
     public void onConnected(Ukcp ukcp) {
-        this.connector.connect(this, new BukkitConnection(ukcp));
+        this.connector.connect(this, new BukkitKcpConnection(ukcp));
     }
 
     @Override

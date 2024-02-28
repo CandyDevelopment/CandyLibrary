@@ -8,7 +8,7 @@ import fit.d6.candy.api.messenger.server.MessengerServerConnector;
 import fit.d6.candy.api.messenger.server.MessengerServerReceiver;
 import fit.d6.candy.exception.MessengerException;
 import fit.d6.candy.messenger.BukkitPacketManager;
-import fit.d6.candy.messenger.BukkitTcpConnection;
+import fit.d6.candy.messenger.BukkitWebSocketConnection;
 import fit.d6.candy.messenger.packet.BukkitReadablePacketContent;
 import fit.d6.candy.messenger.packet.BukkitWritablePacketContent;
 import fit.d6.candy.messenger.packet.PingPacket;
@@ -19,25 +19,31 @@ import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.handler.codec.http.HttpObjectAggregator;
+import io.netty.handler.codec.http.HttpServerCodec;
+import io.netty.handler.codec.http.websocketx.BinaryWebSocketFrame;
+import io.netty.handler.codec.http.websocketx.PingWebSocketFrame;
+import io.netty.handler.codec.http.websocketx.PongWebSocketFrame;
+import io.netty.handler.codec.http.websocketx.WebSocketServerProtocolHandler;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
-public class BukkitTcpMessengerServer extends ChannelInboundHandlerAdapter implements MessengerServer {
+public class BukkitWebSocketMessengerServer extends ChannelInboundHandlerAdapter implements MessengerServer {
 
     private final EventLoopGroup bossGroup = new NioEventLoopGroup();
     private final EventLoopGroup workerGroup = new NioEventLoopGroup();
     private final ChannelFuture channelFuture;
 
-    private final Map<Channel, BukkitTcpConnection> channels = new HashMap<>();
+    private final Map<Channel, BukkitWebSocketConnection> channels = new HashMap<>();
 
     private final MessengerServerConnector connector;
     private final MessengerServerReceiver receiver;
     private final MessengerServerCloser closer;
 
-    public BukkitTcpMessengerServer(int port, BukkitServerOptions options) {
+    public BukkitWebSocketMessengerServer(int port, BukkitServerOptions options) {
         this.connector = options.getConnector();
         this.receiver = options.getReceiver();
         this.closer = options.getCloser();
@@ -45,18 +51,17 @@ public class BukkitTcpMessengerServer extends ChannelInboundHandlerAdapter imple
         ServerBootstrap bootstrap = new ServerBootstrap();
         bootstrap.group(bossGroup, workerGroup)
                 .channel(NioServerSocketChannel.class)
-                .option(ChannelOption.SO_BACKLOG, 128)
                 .option(ChannelOption.SO_KEEPALIVE, true)
-                .option(ChannelOption.SO_REUSEADDR, true)
-                .option(ChannelOption.TCP_NODELAY, true)
-                .option(ChannelOption.SO_SNDBUF, 1024)
-                .option(ChannelOption.SO_RCVBUF, 1024)
-                .option(ChannelOption.SO_TIMEOUT, 10000)
+                .childOption(ChannelOption.TCP_NODELAY, true)
                 .childHandler(new ChannelInitializer<SocketChannel>() {
                     @Override
                     protected void initChannel(SocketChannel channel) throws Exception {
-                        channels.put(channel, new BukkitTcpConnection(channel));
-                        channel.pipeline().addLast(BukkitTcpMessengerServer.this);
+                        channels.put(channel, new BukkitWebSocketConnection(channel));
+                        channel.pipeline()
+                                .addLast(new HttpServerCodec())
+                                .addLast(new HttpObjectAggregator(65536))
+                                .addLast(new WebSocketServerProtocolHandler(options.getWebsocketPath(), null, false, 1024 * 1024 * 50, false, true, 10000L))
+                                .addLast(BukkitWebSocketMessengerServer.this);
                     }
                 });
 
@@ -70,21 +75,26 @@ public class BukkitTcpMessengerServer extends ChannelInboundHandlerAdapter imple
     }
 
     @Override
-    public void channelActive(ChannelHandlerContext ctx) throws Exception {
-        this.connector.connect(this, this.channels.get(ctx.channel()));
+    public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
+        if (evt instanceof WebSocketServerProtocolHandler.HandshakeComplete) {
+            this.connector.connect(this, this.channels.get(ctx.channel()));
+        }
     }
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-        if (msg instanceof ByteBuf byteBuf) {
+        if (msg instanceof BinaryWebSocketFrame binaryWebSocketFrame) {
+            ByteBuf byteBuf = binaryWebSocketFrame.content();
             int packetIdLength = byteBuf.readInt();
             String packetId = byteBuf.readCharSequence(packetIdLength, StandardCharsets.UTF_8).toString();
             Packet packet = BukkitPacketManager.tryToParse(packetId, new BukkitReadablePacketContent(byteBuf));
-            BukkitTcpConnection connection = this.channels.get(ctx.channel());
+            BukkitWebSocketConnection connection = this.channels.get(ctx.channel());
             if (packet instanceof PingPacket ping) {
                 connection.send(new PongPacket(ping.getTimestamp()));
             }
             this.receiver.receive(this, connection, packet);
+        } else if (msg instanceof PingWebSocketFrame pingWebSocketFrame) {
+            ctx.channel().writeAndFlush(new PongWebSocketFrame(pingWebSocketFrame.content().retain()));
         }
     }
 
@@ -99,7 +109,7 @@ public class BukkitTcpMessengerServer extends ChannelInboundHandlerAdapter imple
 
     @Override
     public @NotNull MessengerProtocol getProtocol() {
-        return MessengerProtocol.TCP;
+        return MessengerProtocol.WEBSOCKET;
     }
 
     @Override
@@ -109,7 +119,8 @@ public class BukkitTcpMessengerServer extends ChannelInboundHandlerAdapter imple
         writablePacketContent.writeString(packet.getType().getId(), StandardCharsets.UTF_8);
         packet.serialize(writablePacketContent);
         ByteBuf byteBuf = writablePacketContent.getByteBuf();
-        this.channels.keySet().forEach(channel -> channel.writeAndFlush(byteBuf));
+        BinaryWebSocketFrame frame = new BinaryWebSocketFrame(byteBuf);
+        this.channels.keySet().forEach(channel -> channel.writeAndFlush(frame));
     }
 
     @Override

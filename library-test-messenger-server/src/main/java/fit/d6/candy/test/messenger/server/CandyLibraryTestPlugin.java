@@ -24,7 +24,7 @@ public class CandyLibraryTestPlugin extends JavaPlugin {
                 .closer((server, connection) -> {
                     System.out.println("Closed");
                 })
-                .protocol(MessengerProtocol.TCP));
+                .protocol(MessengerProtocol.WEBSOCKET));
     }
 
 }

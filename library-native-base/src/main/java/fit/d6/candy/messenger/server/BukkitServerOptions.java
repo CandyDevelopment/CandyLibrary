@@ -17,6 +17,7 @@ public class BukkitServerOptions implements ServerOptions {
     };
     private boolean conv = false;
     private MessengerProtocol protocol = MessengerProtocol.KCP;
+    private String websocketPath = "/";
 
     @Override
     public @NotNull ServerOptions connector(@NotNull MessengerServerConnector connector) {
@@ -48,6 +49,12 @@ public class BukkitServerOptions implements ServerOptions {
         return this;
     }
 
+    @Override
+    public @NotNull ServerOptions websocketPath(@NotNull String path) {
+        this.websocketPath = path;
+        return this;
+    }
+
     public MessengerServerConnector getConnector() {
         return connector;
     }
@@ -66,6 +73,10 @@ public class BukkitServerOptions implements ServerOptions {
 
     public MessengerProtocol getProtocol() {
         return protocol;
+    }
+
+    public String getWebsocketPath() {
+        return websocketPath;
     }
 
 }

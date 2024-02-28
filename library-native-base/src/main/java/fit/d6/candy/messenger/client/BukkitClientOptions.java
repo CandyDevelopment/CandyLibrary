@@ -1,5 +1,6 @@
 package fit.d6.candy.messenger.client;
 
+import fit.d6.candy.api.messenger.Address;
 import fit.d6.candy.api.messenger.MessengerProtocol;
 import fit.d6.candy.api.messenger.client.ClientOptions;
 import fit.d6.candy.api.messenger.client.MessengerClientCloser;
@@ -19,6 +20,7 @@ public class BukkitClientOptions implements ClientOptions {
     private boolean keepalive = false;
     private boolean conv = false;
     private MessengerProtocol protocol = MessengerProtocol.KCP;
+    private Address address;
 
     @Override
     public @NotNull ClientOptions connector(@NotNull MessengerClientConnector connector) {
@@ -56,6 +58,12 @@ public class BukkitClientOptions implements ClientOptions {
         return this;
     }
 
+    @Override
+    public @NotNull ClientOptions address(@NotNull Address address) {
+        this.address = address;
+        return this;
+    }
+
     public MessengerClientConnector getConnector() {
         return connector;
     }
@@ -78,6 +86,10 @@ public class BukkitClientOptions implements ClientOptions {
 
     public MessengerProtocol getProtocol() {
         return protocol;
+    }
+
+    public Address getAddress() {
+        return address;
     }
 
 }

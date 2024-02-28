@@ -11,11 +11,11 @@ import java.net.SocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 
-public class BukkitConnection implements Connection {
+public class BukkitKcpConnection implements Connection {
 
     private final Ukcp ukcp;
 
-    public BukkitConnection(Ukcp ukcp) {
+    public BukkitKcpConnection(Ukcp ukcp) {
         this.ukcp = ukcp;
     }
 
@@ -44,7 +44,7 @@ public class BukkitConnection implements Connection {
     public boolean equals(Object object) {
         if (this == object) return true;
         if (object == null || getClass() != object.getClass()) return false;
-        BukkitConnection that = (BukkitConnection) object;
+        BukkitKcpConnection that = (BukkitKcpConnection) object;
         return Objects.equals(ukcp, that.ukcp) || Objects.equals(ukcp.user(), that.ukcp.user()) || Objects.equals(ukcp.getConv(), that.ukcp.getConv());
     }
 

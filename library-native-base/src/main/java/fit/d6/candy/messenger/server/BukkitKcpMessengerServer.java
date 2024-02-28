@@ -6,7 +6,7 @@ import fit.d6.candy.api.messenger.server.MessengerServer;
 import fit.d6.candy.api.messenger.server.MessengerServerCloser;
 import fit.d6.candy.api.messenger.server.MessengerServerConnector;
 import fit.d6.candy.api.messenger.server.MessengerServerReceiver;
-import fit.d6.candy.messenger.BukkitConnection;
+import fit.d6.candy.messenger.BukkitKcpConnection;
 import fit.d6.candy.messenger.BukkitPacketManager;
 import fit.d6.candy.messenger.packet.*;
 import io.netty.buffer.ByteBuf;
@@ -49,7 +49,7 @@ public class BukkitKcpMessengerServer implements KcpListener, MessengerServer {
 
     @Override
     public void onConnected(Ukcp ukcp) {
-        this.connector.connect(this, new BukkitConnection(ukcp));
+        this.connector.connect(this, new BukkitKcpConnection(ukcp));
     }
 
     @Override
@@ -58,9 +58,9 @@ public class BukkitKcpMessengerServer implements KcpListener, MessengerServer {
         String packetId = byteBuf.readCharSequence(packetIdLength, StandardCharsets.UTF_8).toString();
         Packet packet = BukkitPacketManager.tryToParse(packetId, new BukkitReadablePacketContent(byteBuf));
         if (packet instanceof PingPacket ping) {
-            new BukkitConnection(ukcp).send(new PongPacket(ping.getTimestamp()));
+            new BukkitKcpConnection(ukcp).send(new PongPacket(ping.getTimestamp()));
         }
-        this.receiver.receive(this, new BukkitConnection(ukcp), packet);
+        this.receiver.receive(this, new BukkitKcpConnection(ukcp), packet);
     }
 
     @Override
@@ -70,7 +70,7 @@ public class BukkitKcpMessengerServer implements KcpListener, MessengerServer {
 
     @Override
     public void handleClose(Ukcp ukcp) {
-        this.closer.close(this, new BukkitConnection(ukcp));
+        this.closer.close(this, new BukkitKcpConnection(ukcp));
     }
 
     @Override

@@ -1,12 +1,13 @@
 package fit.d6.candy.test.messenger.client;
 
+import fit.d6.candy.api.messenger.Address;
 import fit.d6.candy.api.messenger.MessengerProtocol;
 import fit.d6.candy.api.messenger.MessengerService;
 import fit.d6.candy.api.messenger.client.ClientOptions;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.net.InetAddress;
-import java.net.UnknownHostException;
+import java.net.URI;
+import java.net.URISyntaxException;
 
 public class CandyLibraryTestPlugin extends JavaPlugin {
 
@@ -15,7 +16,7 @@ public class CandyLibraryTestPlugin extends JavaPlugin {
         MessengerService.getService().getPacketManager().register(TestPacketType.INSTANCE, TestPacket::new);
         try {
             MessengerService.getService().getMessengerManager()
-                    .client(1, InetAddress.getLocalHost(), 19856, ClientOptions.of()
+                    .client(1, ClientOptions.of()
                             .connector((self, connection) -> {
                                 System.out.println("Connected");
                                 connection.send(new TestPacket("I wanna know!"));
@@ -30,8 +31,9 @@ public class CandyLibraryTestPlugin extends JavaPlugin {
                                 System.out.println("Closed");
                             })
                             .keepalive(true)
-                            .protocol(MessengerProtocol.TCP));
-        } catch (UnknownHostException e) {
+                            .address(Address.websocket(new URI("ws://127.0.0.1:19856")))
+                            .protocol(MessengerProtocol.WEBSOCKET));
+        } catch (URISyntaxException e) {
             throw new RuntimeException(e);
         }
     }
