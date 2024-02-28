@@ -1,5 +1,6 @@
 package fit.d6.candy.test.messenger.client;
 
+import fit.d6.candy.api.messenger.MessengerProtocol;
 import fit.d6.candy.api.messenger.MessengerService;
 import fit.d6.candy.api.messenger.client.ClientOptions;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -28,7 +29,8 @@ public class CandyLibraryTestPlugin extends JavaPlugin {
                             .closer((self) -> {
                                 System.out.println("Closed");
                             })
-                            .keepalive(true));
+                            .keepalive(true)
+                            .protocol(MessengerProtocol.TCP));
         } catch (UnknownHostException e) {
             throw new RuntimeException(e);
         }

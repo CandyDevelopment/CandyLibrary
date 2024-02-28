@@ -1,6 +1,7 @@
 package fit.d6.candy.api.messenger.client;
 
 import fit.d6.candy.api.messenger.MessengerManager;
+import fit.d6.candy.api.messenger.MessengerProtocol;
 import org.jetbrains.annotations.NotNull;
 
 public interface ClientOptions {
@@ -16,6 +17,12 @@ public interface ClientOptions {
 
     @NotNull
     ClientOptions keepalive(boolean keepalive);
+
+    @NotNull
+    ClientOptions conv(boolean conv);
+
+    @NotNull
+    ClientOptions protocol(@NotNull MessengerProtocol protocol);
 
     @NotNull
     static ClientOptions of() {

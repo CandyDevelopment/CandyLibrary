@@ -1,5 +1,6 @@
 package fit.d6.candy.messenger.client;
 
+import fit.d6.candy.api.messenger.MessengerProtocol;
 import fit.d6.candy.api.messenger.client.ClientOptions;
 import fit.d6.candy.api.messenger.client.MessengerClientCloser;
 import fit.d6.candy.api.messenger.client.MessengerClientConnector;
@@ -16,6 +17,8 @@ public class BukkitClientOptions implements ClientOptions {
     };
 
     private boolean keepalive = false;
+    private boolean conv = false;
+    private MessengerProtocol protocol = MessengerProtocol.KCP;
 
     @Override
     public @NotNull ClientOptions connector(@NotNull MessengerClientConnector connector) {
@@ -41,6 +44,18 @@ public class BukkitClientOptions implements ClientOptions {
         return this;
     }
 
+    @Override
+    public @NotNull ClientOptions conv(boolean conv) {
+        this.conv = conv;
+        return this;
+    }
+
+    @Override
+    public @NotNull ClientOptions protocol(@NotNull MessengerProtocol protocol) {
+        this.protocol = protocol;
+        return this;
+    }
+
     public MessengerClientConnector getConnector() {
         return connector;
     }
@@ -55,6 +70,14 @@ public class BukkitClientOptions implements ClientOptions {
 
     public boolean isKeepalive() {
         return keepalive;
+    }
+
+    public boolean isConv() {
+        return conv;
+    }
+
+    public MessengerProtocol getProtocol() {
+        return protocol;
     }
 
 }

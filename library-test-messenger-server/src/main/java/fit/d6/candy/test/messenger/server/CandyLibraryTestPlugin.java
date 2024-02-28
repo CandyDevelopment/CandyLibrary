@@ -1,5 +1,6 @@
 package fit.d6.candy.test.messenger.server;
 
+import fit.d6.candy.api.messenger.MessengerProtocol;
 import fit.d6.candy.api.messenger.MessengerService;
 import fit.d6.candy.api.messenger.server.ServerOptions;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -22,7 +23,8 @@ public class CandyLibraryTestPlugin extends JavaPlugin {
                 })
                 .closer((server, connection) -> {
                     System.out.println("Closed");
-                }));
+                })
+                .protocol(MessengerProtocol.TCP));
     }
 
 }

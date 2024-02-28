@@ -1,6 +1,7 @@
 package fit.d6.candy.messenger.client;
 
 import fit.d6.candy.api.messenger.Connection;
+import fit.d6.candy.api.messenger.MessengerProtocol;
 import fit.d6.candy.api.messenger.client.MessengerClient;
 import fit.d6.candy.api.messenger.client.MessengerClientCloser;
 import fit.d6.candy.api.messenger.client.MessengerClientConnector;
@@ -11,7 +12,6 @@ import fit.d6.candy.messenger.BukkitPacketManager;
 import fit.d6.candy.messenger.packet.BukkitReadablePacketContent;
 import fit.d6.candy.messenger.packet.ClosePacket;
 import fit.d6.candy.messenger.packet.PingPacket;
-import fit.d6.candy.messenger.packet.PongPacket;
 import io.netty.buffer.ByteBuf;
 import kcp.ChannelConfig;
 import kcp.KcpClient;
@@ -25,7 +25,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Timer;
 import java.util.TimerTask;
 
-public class BukkitMessengerClient implements KcpListener, MessengerClient {
+public class BukkitKcpMessengerClient implements KcpListener, MessengerClient {
 
     private final KcpClient kcpClient = new KcpClient();
     private final Timer timer = new Timer();
@@ -35,25 +35,27 @@ public class BukkitMessengerClient implements KcpListener, MessengerClient {
     private final MessengerClientReceiver receiver;
     private final MessengerClientCloser closer;
 
-    public BukkitMessengerClient(int conv, boolean keepalive, InetAddress address, int port, MessengerClientConnector connector, MessengerClientReceiver receiver, MessengerClientCloser closer) {
-        this.connector = connector;
-        this.receiver = receiver;
-        this.closer = closer;
+    public BukkitKcpMessengerClient(int conv, InetAddress address, int port, BukkitClientOptions options) {
+        this.connector = options.getConnector();
+        this.receiver = options.getReceiver();
+        this.closer = options.getCloser();
 
         ChannelConfig channelConfig = new ChannelConfig();
         channelConfig.nodelay(true, 40, 2, true);
         channelConfig.setSndwnd(1024);
         channelConfig.setRcvwnd(1024);
         channelConfig.setMtu(1400);
-        channelConfig.setConv(conv);
-        channelConfig.setUseConvChannel(true);
+        if (options.isConv()) {
+            channelConfig.setConv(conv);
+            channelConfig.setUseConvChannel(true);
+        }
         channelConfig.setAckNoDelay(false);
         channelConfig.setCrc32Check(true);
         channelConfig.setTimeoutMillis(10000);
 
         kcpClient.init(channelConfig);
         this.connection = new BukkitConnection(kcpClient.connect(new InetSocketAddress(address, port), channelConfig, this));
-        if (keepalive) {
+        if (options.isKeepalive()) {
             timer.scheduleAtFixedRate(new TimerTask() {
                 @Override
                 public void run() {
@@ -77,10 +79,7 @@ public class BukkitMessengerClient implements KcpListener, MessengerClient {
         int packetIdLength = byteBuf.readInt();
         String packetId = byteBuf.readCharSequence(packetIdLength, StandardCharsets.UTF_8).toString();
         Packet packet = BukkitPacketManager.tryToParse(packetId, new BukkitReadablePacketContent(byteBuf));
-        if (packet instanceof PongPacket pong) {
-            System.out.println("Delay: " + (pong.getSend() - pong.getReceive()));
-            return;
-        } else if (packet instanceof ClosePacket) {
+        if (packet instanceof ClosePacket) {
             this.close();
             return;
         }
@@ -95,6 +94,11 @@ public class BukkitMessengerClient implements KcpListener, MessengerClient {
     @Override
     public void handleClose(Ukcp ukcp) {
         this.closer.close(this);
+    }
+
+    @Override
+    public @NotNull MessengerProtocol getProtocol() {
+        return MessengerProtocol.KCP;
     }
 
     @Override
