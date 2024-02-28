@@ -1,0 +1,6 @@
+main: fit.d6.candy.test.messenger.client.CandyLibraryTestPlugin
+name: CandyLibraryMessengerClientTest
+version: 1.0.0
+api-version: 1.17
+author: DeeChael
+depend: [ CandyLibrary ]

@@ -18,14 +18,7 @@ repositories {
 dependencies {
     compileOnly 'io.papermc.paper:paper-api:1.20.4-R0.1-SNAPSHOT'
     compileOnly 'com.mojang:brigadier:1.0.18'
-    compileOnly 'io.netty:netty-all:4.1.106.Final'
-
     compileOnly project(':library-interfaces')
-
-    compileOnly 'com.catppuccin:catppuccin-palette:1.0.0'
-    compileOnly 'com.electronwill.night-config:toml:3.6.0'
-    compileOnly 'com.zaxxer:HikariCP:5.1.0'
-    compileOnly 'com.github.l42111996:kcp-base:1.6'
 
     testImplementation platform('org.junit:junit-bom:5.9.1')
     testImplementation 'org.junit.jupiter:junit-jupiter'

@@ -34,4 +34,7 @@ public class CandyLibraryConfiguration {
     public boolean world = true;
     @Node("event")
     public boolean event = true;
+    @Node("messenger")
+    public boolean messenger = true;
+
 }
