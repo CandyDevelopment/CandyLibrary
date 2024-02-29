@@ -65,10 +65,6 @@ class DslCompound {
         compound.putByteArray(this, listOf(*value))
     }
 
-    operator fun String.plus(value: List<Byte>) {
-        compound.putByteArray(this, value)
-    }
-
     operator fun String.plus(value: IntArray) {
         compound.putIntArray(this, value)
     }
@@ -77,20 +73,12 @@ class DslCompound {
         compound.putIntArray(this, listOf(*value))
     }
 
-    operator fun String.plus(value: List<Int>) {
-        compound.putIntArray(this, value)
-    }
-
     operator fun String.plus(value: LongArray) {
         compound.putLongArray(this, value)
     }
 
     operator fun String.plus(value: Array<Long>) {
         compound.putLongArray(this, listOf(*value))
-    }
-
-    operator fun String.plus(value: List<Long>) {
-        compound.putLongArray(this, value)
     }
 
     operator fun String.plus(value: Boolean) {
@@ -151,16 +139,8 @@ class DslList {
         list.add(NbtByteArray.of(this))
     }
 
-    operator fun IntArray.unaryPlus() {
-        list.add(NbtIntArray.of(this))
-    }
-
     operator fun Array<Int>.unaryPlus() {
         list.add(NbtIntArray.of(listOf(*this)))
-    }
-
-    operator fun List<Int>.unaryPlus() {
-        list.add(NbtIntArray.of(this))
     }
 
     operator fun LongArray.unaryPlus() {
@@ -169,10 +149,6 @@ class DslList {
 
     operator fun Array<Long>.unaryPlus() {
         list.add(NbtLongArray.of(listOf(*this)))
-    }
-
-    operator fun List<Long>.unaryPlus() {
-        list.add(NbtLongArray.of(this))
     }
 
     fun original(): NbtList {
