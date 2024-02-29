@@ -7,6 +7,9 @@ import org.jetbrains.annotations.Nullable;
 
 public interface ItemManager {
 
+    @NotNull
+    ItemStackBuilder createItemStackBuilder();
+
     @Nullable
     NbtCompound getNbt(@NotNull ItemStack itemStack);
 
@@ -15,5 +18,10 @@ public interface ItemManager {
 
     @NotNull
     ItemStack setNbt(@NotNull ItemStack itemStack, @NotNull NbtCompound nbt);
+
+    @NotNull
+    static ItemManager getManager() {
+        return ItemService.getService().getItemManager();
+    }
 
 }

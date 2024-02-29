@@ -2,20 +2,8 @@
 
 package fit.d6.candy.dsl
 
-import fit.d6.candy.api.nbt.NbtBase
-import fit.d6.candy.api.nbt.NbtByte
-import fit.d6.candy.api.nbt.NbtByteArray
-import fit.d6.candy.api.nbt.NbtCompound
-import fit.d6.candy.api.nbt.NbtDouble
-import fit.d6.candy.api.nbt.NbtFloat
-import fit.d6.candy.api.nbt.NbtInt
-import fit.d6.candy.api.nbt.NbtIntArray
-import fit.d6.candy.api.nbt.NbtList
-import fit.d6.candy.api.nbt.NbtLong
-import fit.d6.candy.api.nbt.NbtLongArray
-import fit.d6.candy.api.nbt.NbtShort
-import fit.d6.candy.api.nbt.NbtString
-import java.util.UUID
+import fit.d6.candy.api.nbt.*
+import java.util.*
 
 class DslCompound {
 

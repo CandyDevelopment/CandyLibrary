@@ -1,6 +1,7 @@
 package fit.d6.candy.item;
 
 import fit.d6.candy.api.item.ItemManager;
+import fit.d6.candy.api.item.ItemStackBuilder;
 import fit.d6.candy.api.nbt.NbtCompound;
 import fit.d6.candy.nms.NmsAccessor;
 import org.bukkit.inventory.ItemStack;
@@ -8,6 +9,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class BukkitItemManager implements ItemManager {
+
+    @Override
+    public @NotNull ItemStackBuilder createItemStackBuilder() {
+        return new BukkitItemStackBuilder();
+    }
 
     @Override
     public @Nullable NbtCompound getNbt(@NotNull ItemStack itemStack) {

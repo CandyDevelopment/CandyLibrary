@@ -12,8 +12,8 @@ fun nbtTest() {
 
             "names" + List {
 
-                + "DeeChael"
-                + "Qianm_ing"
+                +"DeeChael"
+                +"Qianm_ing"
 
             }
 

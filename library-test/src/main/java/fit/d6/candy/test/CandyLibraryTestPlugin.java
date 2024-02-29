@@ -16,6 +16,7 @@ import fit.d6.candy.api.world.FlatSettings;
 import fit.d6.candy.api.world.WorldManager;
 import fit.d6.candy.test.commands.arguments.*;
 import fit.d6.candy.test.services.GuiServiceTest;
+import fit.d6.candy.test.services.ItemServiceTest;
 import fit.d6.candy.test.services.ScoreboardServiceTest;
 import fit.d6.candy.test.services.TabListServiceTest;
 import net.kyori.adventure.text.Component;
@@ -85,6 +86,7 @@ public class CandyLibraryTestPlugin extends JavaPlugin {
         ScoreboardServiceTest.register(services);
         TabListServiceTest.register(services);
         GuiServiceTest.register(services);
+        ItemServiceTest.register(services);
 
         candyLibraryCommand.then(arguments);
         candyLibraryCommand.then(services);
