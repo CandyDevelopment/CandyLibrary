@@ -236,6 +236,10 @@ fun rotation(): ArgumentType {
     return CommandService.getService().argumentManager.rotation();
 }
 
+fun duration(): ArgumentType {
+    return CommandService.getService().argumentManager.duration();
+}
+
 @Suppress("UNCHECKED_CAST")
 private fun <T> resolve(type: ArgumentTypes, name: String, helper: CommandArgumentHelper): T {
     return when (type) {
@@ -357,6 +361,10 @@ private fun <T> resolve(type: ArgumentTypes, name: String, helper: CommandArgume
 
         ArgumentTypes.ROTATION -> {
             helper.getRotation(name) as T
+        }
+
+        ArgumentTypes.DURATION -> {
+            helper.getDuration(name) as T
         }
 
         else -> {
