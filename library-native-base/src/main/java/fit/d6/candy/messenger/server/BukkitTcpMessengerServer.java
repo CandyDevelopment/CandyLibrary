@@ -46,12 +46,12 @@ public class BukkitTcpMessengerServer extends ChannelInboundHandlerAdapter imple
         bootstrap.group(bossGroup, workerGroup)
                 .channel(NioServerSocketChannel.class)
                 .option(ChannelOption.SO_BACKLOG, 128)
-                .option(ChannelOption.SO_KEEPALIVE, true)
                 .option(ChannelOption.SO_REUSEADDR, true)
-                .option(ChannelOption.TCP_NODELAY, true)
-                .option(ChannelOption.SO_SNDBUF, 1024)
-                .option(ChannelOption.SO_RCVBUF, 1024)
-                .option(ChannelOption.SO_TIMEOUT, 10000)
+                .childOption(ChannelOption.SO_KEEPALIVE, true)
+                .childOption(ChannelOption.TCP_NODELAY, true)
+                .childOption(ChannelOption.SO_SNDBUF, 1024)
+                .childOption(ChannelOption.SO_RCVBUF, 1024)
+                .childOption(ChannelOption.SO_TIMEOUT, 10000)
                 .childHandler(new ChannelInitializer<SocketChannel>() {
                     @Override
                     protected void initChannel(SocketChannel channel) throws Exception {

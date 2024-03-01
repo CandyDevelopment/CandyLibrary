@@ -18,4 +18,8 @@ include 'library-native-v1_17_R1'
 include 'library-dsl'
 include 'library-test-messenger-server'
 include 'library-test-messenger-client'
+include 'library-velocity-interfaces'
+include 'library-velocity-implementation'
+include 'library-velocity-test-messenger-server'
+include 'library-shared'
 

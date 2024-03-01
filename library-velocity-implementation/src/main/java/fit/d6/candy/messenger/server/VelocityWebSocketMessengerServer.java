@@ -7,12 +7,12 @@ import fit.d6.candy.api.messenger.server.MessengerServerCloser;
 import fit.d6.candy.api.messenger.server.MessengerServerConnector;
 import fit.d6.candy.api.messenger.server.MessengerServerReceiver;
 import fit.d6.candy.exception.MessengerException;
-import fit.d6.candy.messenger.BukkitPacketManager;
-import fit.d6.candy.messenger.BukkitWebSocketConnection;
-import fit.d6.candy.messenger.packet.BukkitReadablePacketContent;
-import fit.d6.candy.messenger.packet.BukkitWritablePacketContent;
+import fit.d6.candy.messenger.VelocityPacketManager;
+import fit.d6.candy.messenger.VelocityWebSocketConnection;
 import fit.d6.candy.messenger.packet.PingPacket;
 import fit.d6.candy.messenger.packet.PongPacket;
+import fit.d6.candy.messenger.packet.VelocityReadablePacketContent;
+import fit.d6.candy.messenger.packet.VelocityWritablePacketContent;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.*;
@@ -31,19 +31,19 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
-public class BukkitWebSocketMessengerServer extends ChannelInboundHandlerAdapter implements MessengerServer {
+public class VelocityWebSocketMessengerServer extends ChannelInboundHandlerAdapter implements MessengerServer {
 
     private final EventLoopGroup bossGroup = new NioEventLoopGroup();
     private final EventLoopGroup workerGroup = new NioEventLoopGroup();
     private final ChannelFuture channelFuture;
 
-    private final Map<Channel, BukkitWebSocketConnection> channels = new HashMap<>();
+    private final Map<Channel, VelocityWebSocketConnection> channels = new HashMap<>();
 
     private final MessengerServerConnector connector;
     private final MessengerServerReceiver receiver;
     private final MessengerServerCloser closer;
 
-    public BukkitWebSocketMessengerServer(int port, BukkitServerOptions options) {
+    public VelocityWebSocketMessengerServer(int port, VelocityServerOptions options) {
         this.connector = options.getConnector();
         this.receiver = options.getReceiver();
         this.closer = options.getCloser();
@@ -56,12 +56,12 @@ public class BukkitWebSocketMessengerServer extends ChannelInboundHandlerAdapter
                 .childHandler(new ChannelInitializer<SocketChannel>() {
                     @Override
                     protected void initChannel(SocketChannel channel) throws Exception {
-                        channels.put(channel, new BukkitWebSocketConnection(channel));
+                        channels.put(channel, new VelocityWebSocketConnection(channel));
                         channel.pipeline()
                                 .addLast(new HttpServerCodec())
                                 .addLast(new HttpObjectAggregator(65536))
                                 .addLast(new WebSocketServerProtocolHandler(options.getWebsocketPath(), null, false, 1024 * 1024 * 50, false, true, 10000L))
-                                .addLast(BukkitWebSocketMessengerServer.this);
+                                .addLast(VelocityWebSocketMessengerServer.this);
                     }
                 });
 
@@ -87,8 +87,8 @@ public class BukkitWebSocketMessengerServer extends ChannelInboundHandlerAdapter
             ByteBuf byteBuf = binaryWebSocketFrame.content();
             int packetIdLength = byteBuf.readInt();
             String packetId = byteBuf.readCharSequence(packetIdLength, StandardCharsets.UTF_8).toString();
-            Packet packet = BukkitPacketManager.tryToParse(packetId, new BukkitReadablePacketContent(byteBuf));
-            BukkitWebSocketConnection connection = this.channels.get(ctx.channel());
+            Packet packet = VelocityPacketManager.tryToParse(packetId, new VelocityReadablePacketContent(byteBuf));
+            VelocityWebSocketConnection connection = this.channels.get(ctx.channel());
             if (packet instanceof PingPacket ping) {
                 connection.send(new PongPacket(ping.getTimestamp()));
             }
@@ -114,7 +114,7 @@ public class BukkitWebSocketMessengerServer extends ChannelInboundHandlerAdapter
 
     @Override
     public void broadcast(@NotNull Packet packet) {
-        BukkitWritablePacketContent writablePacketContent = new BukkitWritablePacketContent();
+        VelocityWritablePacketContent writablePacketContent = new VelocityWritablePacketContent();
         writablePacketContent.writeInt(packet.getType().getId().length());
         writablePacketContent.writeString(packet.getType().getId(), StandardCharsets.UTF_8);
         packet.serialize(writablePacketContent);
