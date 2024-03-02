@@ -22,4 +22,5 @@ include 'library-velocity-interfaces'
 include 'library-velocity-implementation'
 include 'library-velocity-test-messenger-server'
 include 'library-shared'
+include 'library-multiplatform'
 

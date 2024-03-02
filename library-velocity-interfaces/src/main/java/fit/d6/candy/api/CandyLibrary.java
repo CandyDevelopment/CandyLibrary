@@ -8,6 +8,11 @@ public interface CandyLibrary {
 
     @NotNull <S extends Service> S getService(@NotNull Class<S> clazz);
 
+    <S extends Service> boolean isServiceConfigured(@NotNull Class<S> clazz);
+
+    @NotNull
+    CandyVersion getVersion();
+
     @NotNull
     static CandyLibrary getLibrary() {
         try {
@@ -16,6 +21,11 @@ public interface CandyLibrary {
                  ClassNotFoundException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @NotNull
+    static CandyVersion version() {
+        return getLibrary().getVersion();
     }
 
 }

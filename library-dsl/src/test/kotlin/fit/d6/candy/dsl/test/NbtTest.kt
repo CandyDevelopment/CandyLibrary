@@ -1,7 +1,7 @@
 package fit.d6.candy.dsl.test
 
-import fit.d6.candy.dsl.Compound
-import fit.d6.candy.dsl.List
+import fit.d6.candy.bukkit.dsl.Compound
+import fit.d6.candy.bukkit.dsl.List
 
 fun nbtTest() {
     Compound {

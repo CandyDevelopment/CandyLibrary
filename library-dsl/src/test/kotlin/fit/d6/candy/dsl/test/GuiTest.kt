@@ -1,9 +1,9 @@
 package fit.d6.candy.dsl.test
 
-import fit.d6.candy.dsl.NormalGui
-import fit.d6.candy.dsl.Renderer
-import fit.d6.candy.dsl.Slot
-import fit.d6.candy.dsl.guiAudience
+import fit.d6.candy.bukkit.dsl.NormalGui
+import fit.d6.candy.bukkit.dsl.Renderer
+import fit.d6.candy.bukkit.dsl.Slot
+import fit.d6.candy.bukkit.dsl.guiAudience
 import net.kyori.adventure.text.Component
 import org.bukkit.Material
 import org.bukkit.entity.Player

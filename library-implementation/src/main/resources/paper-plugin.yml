@@ -1,7 +1,8 @@
-main: fit.d6.candy.CandyLibraryPlugin
-loader: fit.d6.candy.CandyLibraryPluginLoader
+main: fit.d6.candy.bukkit.CandyLibraryPlugin
+loader: fit.d6.candy.bukkit.CandyLibraryPluginLoader
 name: CandyLibrary
 version: 1.0.0
 api-version: "1.19"
 author: DeeChael
+description: A powerful library
 folia-supported: true
