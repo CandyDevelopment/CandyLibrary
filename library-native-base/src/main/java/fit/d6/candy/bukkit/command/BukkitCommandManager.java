@@ -15,10 +15,7 @@ import org.bukkit.event.server.ServerLoadEvent;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 
 public class BukkitCommandManager implements CommandManager, Listener {
 
@@ -38,6 +35,7 @@ public class BukkitCommandManager implements CommandManager, Listener {
     }
 
     private static final Map<String, LinkedHashMap<Command, CommandOptions>> REGISTERED = new HashMap<>();
+    private static final List<String> REGISTERED_NAMES = new ArrayList<>();
     private boolean removeVanillaCommands = false;
     private boolean removePrefixedCommands = false;
 
@@ -98,6 +96,7 @@ public class BukkitCommandManager implements CommandManager, Listener {
             Bukkit.getCommandMap().register(prefix, wrappedCommand);
         }
         Command command = new BukkitCommand(commandNode);
+        REGISTERED_NAMES.add(command.getName());
         REGISTERED.get(prefix).put(command, options);
         return command;
     }
@@ -118,6 +117,8 @@ public class BukkitCommandManager implements CommandManager, Listener {
 
         if (this.removeVanillaCommands) {
             for (Map.Entry<String, org.bukkit.command.Command> entry : new ArrayList<>(knownCommands.entrySet())) {
+                if (REGISTERED_NAMES.contains(entry.getKey()))
+                    continue;
                 if (NmsAccessor.getAccessor().isVanillaCommandWrapper(entry.getValue())) {
                     knownCommands.remove(entry.getKey());
                     literals.remove(entry.getKey());
@@ -134,9 +135,6 @@ public class BukkitCommandManager implements CommandManager, Listener {
                 BukkitCommandOptions options = (BukkitCommandOptions) entry.getValue();
                 CommandNode<Object> commandNode = ((BukkitCommand) command).toBrigadier();
 
-                org.bukkit.command.Command vanillaWrapper = knownCommands.get(command.getName());
-                org.bukkit.command.Command prefixVanillaWrapper = knownCommands.get(prefix + ":" + command.getName());
-
                 org.bukkit.command.Command commandWrapper = (org.bukkit.command.Command) NmsAccessor.getAccessor().createVanillaCommandWrapper(bukkitCommands, commandNode);
 
                 commandWrapper.setAliases(options.getAliases());
@@ -144,25 +142,17 @@ public class BukkitCommandManager implements CommandManager, Listener {
                 if (options.getUsage() != null)
                     commandWrapper.setUsage(options.getUsage());
 
-                if (vanillaWrapper != null) {
-                    knownCommands.put(command.getName(), commandWrapper);
-                }
+                knownCommands.put(command.getName(), commandWrapper);
 
-                if (prefixVanillaWrapper != null) {
+                if (!this.removePrefixedCommands) {
                     knownCommands.put(prefix + ":" + command.getName(), commandWrapper);
                 }
 
                 for (String alias : options.getAliases()) {
+                    knownCommands.put(alias, commandWrapper);
 
-                    org.bukkit.command.Command aliasVanillaWrapper = knownCommands.get(alias);
-                    org.bukkit.command.Command prefixAliasVanillaWrapper = knownCommands.get(prefix + ":" + alias);
-
-                    if (aliasVanillaWrapper != null) {
-                        knownCommands.put(command.getName(), commandWrapper);
-                    }
-
-                    if (prefixAliasVanillaWrapper != null) {
-                        knownCommands.put(prefix + ":" + command.getName(), commandWrapper);
+                    if (!this.removePrefixedCommands) {
+                        knownCommands.put(prefix + ":" + alias, commandWrapper);
                     }
 
                 }
