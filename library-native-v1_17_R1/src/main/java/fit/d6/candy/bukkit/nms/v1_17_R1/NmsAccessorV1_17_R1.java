@@ -16,6 +16,7 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.mojang.brigadier.tree.CommandNode;
+import com.mojang.brigadier.tree.RootCommandNode;
 import com.mojang.serialization.Lifecycle;
 import fit.d6.candy.api.gui.anvil.AnvilGuiScene;
 import fit.d6.candy.api.item.BlockInput;
@@ -75,6 +76,7 @@ import net.minecraft.network.Connection;
 import net.minecraft.network.protocol.game.*;
 import net.minecraft.network.protocol.login.ClientboundGameProfilePacket;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.ServerScoreboard;
 import net.minecraft.server.commands.AttributeCommand;
 import net.minecraft.server.dedicated.DedicatedServer;
@@ -97,6 +99,7 @@ import net.minecraft.world.scores.Scoreboard;
 import net.minecraft.world.scores.criteria.ObjectiveCriteria;
 import org.bukkit.*;
 import org.bukkit.attribute.Attribute;
+import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.craftbukkit.v1_17_R1.CraftParticle;
 import org.bukkit.craftbukkit.v1_17_R1.CraftServer;
@@ -1060,6 +1063,16 @@ public class NmsAccessorV1_17_R1 implements NmsAccessor {
     @Override
     public @NotNull String getId() {
         return "nms_accessor";
+    }
+
+    @Override
+    public boolean isVanillaCommandWrapper(Command command) {
+        return command instanceof VanillaCommandWrapper;
+    }
+
+    @Override
+    public RootCommandNode<?> getRootCommandNode() {
+        return ((CraftServer) Bukkit.getServer()).getServer().getCommands().getDispatcher().getRoot();
     }
 
 }

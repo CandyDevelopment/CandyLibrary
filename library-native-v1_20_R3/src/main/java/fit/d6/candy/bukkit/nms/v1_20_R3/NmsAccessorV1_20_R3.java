@@ -17,6 +17,7 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.mojang.brigadier.tree.CommandNode;
+import com.mojang.brigadier.tree.RootCommandNode;
 import com.mojang.serialization.Dynamic;
 import com.mojang.serialization.Lifecycle;
 import fit.d6.candy.api.gui.anvil.AnvilGuiScene;
@@ -117,6 +118,7 @@ import net.minecraft.world.scores.*;
 import net.minecraft.world.scores.criteria.ObjectiveCriteria;
 import org.bukkit.*;
 import org.bukkit.attribute.Attribute;
+import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.craftbukkit.v1_20_R3.CraftParticle;
 import org.bukkit.craftbukkit.v1_20_R3.CraftServer;
@@ -1490,6 +1492,16 @@ public class NmsAccessorV1_20_R3 implements NmsAccessor {
     @Override
     public @NotNull String getId() {
         return "nms_accessor";
+    }
+
+    @Override
+    public boolean isVanillaCommandWrapper(Command command) {
+        return command instanceof VanillaCommandWrapper;
+    }
+
+    @Override
+    public RootCommandNode<?> getRootCommandNode() {
+        return MinecraftServer.getServer().getCommands().getDispatcher().getRoot();
     }
 
 }

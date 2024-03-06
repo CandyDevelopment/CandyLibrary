@@ -10,6 +10,7 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.mojang.brigadier.tree.CommandNode;
+import com.mojang.brigadier.tree.RootCommandNode;
 import fit.d6.candy.api.CandyLibrary;
 import fit.d6.candy.api.Service;
 import fit.d6.candy.api.gui.anvil.AnvilGuiScene;
@@ -36,6 +37,7 @@ import io.netty.channel.Channel;
 import net.kyori.adventure.text.Component;
 import org.bukkit.*;
 import org.bukkit.attribute.Attribute;
+import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Entity;
@@ -347,5 +349,9 @@ public interface NmsAccessor extends Service {
     static NmsAccessor getAccessor() {
         return CandyLibrary.getLibrary().getService(NmsAccessor.class);
     }
+
+    boolean isVanillaCommandWrapper(Command command);
+
+    RootCommandNode<?> getRootCommandNode();
 
 }

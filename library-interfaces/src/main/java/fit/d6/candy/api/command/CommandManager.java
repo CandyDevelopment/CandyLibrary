@@ -6,6 +6,10 @@ import org.jetbrains.annotations.NotNull;
 @FoliaSupport
 public interface CommandManager {
 
+    void removeVanillaCommands();
+
+    void removePrefixedCommands();
+
     @NotNull
     CommandOptions createOptions();
 

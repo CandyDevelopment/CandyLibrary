@@ -48,6 +48,8 @@ public class CandyLibraryTestPlugin extends JavaPlugin {
 
         CommandBuilder arguments = commandManager.createCommand("arguments");
 
+        commandManager.removePrefixedCommands();
+
         StringArgumentTest.register(arguments);
         BooleanArgumentTest.register(arguments);
         IntegerArgumentTest.register(arguments);

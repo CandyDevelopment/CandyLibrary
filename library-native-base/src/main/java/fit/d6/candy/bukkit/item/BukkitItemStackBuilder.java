@@ -5,6 +5,7 @@ import com.destroystokyo.paper.profile.PlayerProfile;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import fit.d6.candy.api.item.ItemStackBuilder;
+import io.papermc.paper.potion.SuspiciousEffectEntry;
 import net.kyori.adventure.inventory.Book;
 import net.kyori.adventure.text.Component;
 import org.bukkit.*;
@@ -551,7 +552,7 @@ public class BukkitItemStackBuilder implements ItemStackBuilder {
 
             if (!this.potionEffects.isEmpty() && itemMeta instanceof SuspiciousStewMeta suspiciousStewMeta) {
                 for (Map.Entry<PotionEffect, Boolean> entry : this.potionEffects.entrySet()) {
-                    suspiciousStewMeta.addCustomEffect(entry.getKey(), entry.getValue());
+                    suspiciousStewMeta.addCustomEffect(SuspiciousEffectEntry.create(entry.getKey().getType(), entry.getKey().getDuration()), entry.getValue());
                 }
             }
 

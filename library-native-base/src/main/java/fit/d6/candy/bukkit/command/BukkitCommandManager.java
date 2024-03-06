@@ -1,6 +1,8 @@
 package fit.d6.candy.bukkit.command;
 
 import com.mojang.brigadier.tree.CommandNode;
+import com.mojang.brigadier.tree.LiteralCommandNode;
+import com.mojang.brigadier.tree.RootCommandNode;
 import fit.d6.candy.api.command.*;
 import fit.d6.candy.bukkit.command.argument.BukkitArgumentType;
 import fit.d6.candy.bukkit.exception.CommandException;
@@ -12,13 +14,42 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.server.ServerLoadEvent;
 import org.jetbrains.annotations.NotNull;
 
+import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class BukkitCommandManager implements CommandManager, Listener {
 
+    private final static Field COMMAND_NODE__CHILDREN;
+    private final static Field COMMAND_NODE__LIETRALS;
+
+    static {
+        try {
+            COMMAND_NODE__CHILDREN = CommandNode.class.getDeclaredField("children");
+            COMMAND_NODE__LIETRALS = CommandNode.class.getDeclaredField("literals");
+
+            COMMAND_NODE__CHILDREN.setAccessible(true);
+            COMMAND_NODE__LIETRALS.setAccessible(true);
+        } catch (NoSuchFieldException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     private static final Map<String, LinkedHashMap<Command, CommandOptions>> REGISTERED = new HashMap<>();
+    private boolean removeVanillaCommands = false;
+    private boolean removePrefixedCommands = false;
+
+    @Override
+    public void removeVanillaCommands() {
+        this.removeVanillaCommands = true;
+    }
+
+    @Override
+    public void removePrefixedCommands() {
+        this.removePrefixedCommands = true;
+    }
 
     @Override
     public @NotNull CommandOptions createOptions() {
@@ -71,14 +102,31 @@ public class BukkitCommandManager implements CommandManager, Listener {
         return command;
     }
 
+    @SuppressWarnings("unchecked")
     @EventHandler
-    public void onLoad(ServerLoadEvent event) {
+    public void onLoad(ServerLoadEvent event) throws IllegalAccessException {
         // Name this with bukkit because actually bukkit created a new one replace the vanilla one
         Object bukkitCommands = NmsAccessor.getAccessor().getBukkitCommands();
 
+        RootCommandNode<?> rootCommandNode = NmsAccessor.getAccessor().getRootCommandNode();
         CommandMap commandMap = Bukkit.getCommandMap();
 
         Map<String, org.bukkit.command.Command> knownCommands = commandMap.getKnownCommands();
+
+        Map<String, CommandNode<?>> children = (Map<String, CommandNode<?>>) COMMAND_NODE__CHILDREN.get(rootCommandNode);
+        Map<String, LiteralCommandNode<?>> literals = (Map<String, LiteralCommandNode<?>>) COMMAND_NODE__LIETRALS.get(rootCommandNode);
+
+        if (this.removeVanillaCommands) {
+            for (Map.Entry<String, org.bukkit.command.Command> entry : new ArrayList<>(knownCommands.entrySet())) {
+                if (NmsAccessor.getAccessor().isVanillaCommandWrapper(entry.getValue())) {
+                    knownCommands.remove(entry.getKey());
+                    literals.remove(entry.getKey());
+                    if (children.get(entry.getKey()) instanceof LiteralCommandNode) {
+                        children.remove(entry.getKey());
+                    }
+                }
+            }
+        }
 
         for (String prefix : REGISTERED.keySet()) {
             for (Map.Entry<Command, CommandOptions> entry : REGISTERED.get(prefix).entrySet()) {
@@ -117,6 +165,18 @@ public class BukkitCommandManager implements CommandManager, Listener {
                         knownCommands.put(prefix + ":" + command.getName(), commandWrapper);
                     }
 
+                }
+            }
+        }
+
+        if (this.removePrefixedCommands) {
+            for (String key : new ArrayList<>(knownCommands.keySet())) {
+                if (key.contains(":")) {
+                    knownCommands.remove(key);
+                    literals.remove(key);
+                    if (children.get(key) instanceof LiteralCommandNode) {
+                        children.remove(key);
+                    }
                 }
             }
         }
