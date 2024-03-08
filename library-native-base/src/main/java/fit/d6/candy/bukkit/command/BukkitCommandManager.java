@@ -143,16 +143,20 @@ public class BukkitCommandManager implements CommandManager, Listener {
                     commandWrapper.setUsage(options.getUsage());
 
                 knownCommands.put(command.getName(), commandWrapper);
+                children.put(command.getName(), commandNode);
 
                 if (!this.removePrefixedCommands) {
                     knownCommands.put(prefix + ":" + command.getName(), commandWrapper);
+                    children.put(prefix + ":" + command.getName(), commandNode);
                 }
 
                 for (String alias : options.getAliases()) {
                     knownCommands.put(alias, commandWrapper);
+                    children.put(alias, commandNode);
 
                     if (!this.removePrefixedCommands) {
                         knownCommands.put(prefix + ":" + alias, commandWrapper);
+                        children.put(prefix + ":" + alias, commandNode);
                     }
 
                 }
