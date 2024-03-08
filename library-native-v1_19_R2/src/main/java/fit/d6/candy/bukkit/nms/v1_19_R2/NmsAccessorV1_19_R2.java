@@ -909,18 +909,20 @@ public class NmsAccessorV1_19_R2 implements NmsAccessor {
 
     @Override
     public NbtCompound getNbt(org.bukkit.inventory.ItemStack itemStack) {
-        CompoundTag tag = CraftItemStack.asNMSCopy(itemStack).getTag();
+        ItemStack nmsStack = itemStack instanceof CraftItemStack craftItemStack ? craftItemStack.handle : CraftItemStack.asNMSCopy(itemStack);
+        CompoundTag tag = nmsStack.getTag();
         return tag == null ? null : (NbtCompound) BukkitNbtCompound.nmsToCandy(tag);
     }
 
     @Override
     public NbtCompound getOrCreateNbt(org.bukkit.inventory.ItemStack itemStack) {
-        return (NbtCompound) BukkitNbtCompound.nmsToCandy(CraftItemStack.asNMSCopy(itemStack).getOrCreateTag());
+        ItemStack nmsStack = itemStack instanceof CraftItemStack craftItemStack ? craftItemStack.handle : CraftItemStack.asNMSCopy(itemStack);
+        return (NbtCompound) BukkitNbtCompound.nmsToCandy(nmsStack.getOrCreateTag());
     }
 
     @Override
     public org.bukkit.inventory.ItemStack setNbt(org.bukkit.inventory.ItemStack itemStack, NbtCompound nbtCompound) {
-        ItemStack nmsStack = CraftItemStack.asNMSCopy(itemStack);
+        ItemStack nmsStack = itemStack instanceof CraftItemStack craftItemStack ? craftItemStack.handle : CraftItemStack.asNMSCopy(itemStack);
         nmsStack.setTag((CompoundTag) ((BukkitNbtCompound) nbtCompound).getNms());
         return CraftItemStack.asBukkitCopy(nmsStack);
     }
