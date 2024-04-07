@@ -1492,11 +1492,6 @@ public class NmsAccessorV1_20_R3 implements NmsAccessor {
     }
 
     @Override
-    public @NotNull String getId() {
-        return "nms_accessor";
-    }
-
-    @Override
     public boolean isVanillaCommandWrapper(Command command) {
         return command instanceof VanillaCommandWrapper;
     }
@@ -1504,6 +1499,16 @@ public class NmsAccessorV1_20_R3 implements NmsAccessor {
     @Override
     public RootCommandNode<?> getRootCommandNode() {
         return MinecraftServer.getServer().getCommands().getDispatcher().getRoot();
+    }
+
+    @Override
+    public org.bukkit.inventory.ItemStack newCraftItemStack(Material type) {
+        return CraftItemStack.asCraftCopy(new org.bukkit.inventory.ItemStack(type));
+    }
+
+    @Override
+    public @NotNull String getId() {
+        return "nms_accessor";
     }
 
 }

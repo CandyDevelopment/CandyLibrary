@@ -30,14 +30,6 @@ import fit.d6.candy.bukkit.item.BukkitItemService;
 import fit.d6.candy.bukkit.messenger.BukkitMessengerService;
 import fit.d6.candy.bukkit.nbt.BukkitNbtService;
 import fit.d6.candy.bukkit.nms.NmsAccessor;
-import fit.d6.candy.bukkit.nms.v1_17_R1.NmsAccessorV1_17_R1;
-import fit.d6.candy.bukkit.nms.v1_18_R1.NmsAccessorV1_18_R1;
-import fit.d6.candy.bukkit.nms.v1_18_R2.NmsAccessorV1_18_R2;
-import fit.d6.candy.bukkit.nms.v1_19_R1.NmsAccessorV1_19_R1;
-import fit.d6.candy.bukkit.nms.v1_19_R2.NmsAccessorV1_19_R2;
-import fit.d6.candy.bukkit.nms.v1_19_R3.NmsAccessorV1_19_R3;
-import fit.d6.candy.bukkit.nms.v1_20_R1.NmsAccessorV1_20_R1;
-import fit.d6.candy.bukkit.nms.v1_20_R2.NmsAccessorV1_20_R2;
 import fit.d6.candy.bukkit.nms.v1_20_R3.NmsAccessorV1_20_R3;
 import fit.d6.candy.bukkit.player.BukkitPlayerService;
 import fit.d6.candy.bukkit.protocol.BukkitProtocolService;
@@ -73,30 +65,6 @@ public class CandyLibraryPlugin extends JavaPlugin implements CandyLibrary {
             if (Ref.getObcVersion().equals("1_20_R3")) {
                 this.accessor = new NmsAccessorV1_20_R3();
                 candyVersion = CandyVersion.V1_20_R3;
-            } else if (Ref.getObcVersion().equals("1_20_R2")) {
-                this.accessor = new NmsAccessorV1_20_R2();
-                candyVersion = CandyVersion.V1_20_R2;
-            } else if (Ref.getObcVersion().equals("1_20_R1")) {
-                this.accessor = new NmsAccessorV1_20_R1();
-                candyVersion = CandyVersion.V1_20_R1;
-            } else if (Ref.getObcVersion().equals("1_19_R3")) {
-                this.accessor = new NmsAccessorV1_19_R3();
-                candyVersion = CandyVersion.V1_19_R3;
-            } else if (Ref.getObcVersion().equals("1_19_R2")) {
-                this.accessor = new NmsAccessorV1_19_R2();
-                candyVersion = CandyVersion.V1_19_R2;
-            } else if (Ref.getObcVersion().equals("1_19_R1")) {
-                this.accessor = new NmsAccessorV1_19_R1();
-                candyVersion = CandyVersion.V1_19_R1;
-            } else if (Ref.getObcVersion().equals("1_18_R2")) {
-                this.accessor = new NmsAccessorV1_18_R2();
-                candyVersion = CandyVersion.V1_18_R2;
-            } else if (Ref.getObcVersion().equals("1_18_R1")) {
-                this.accessor = new NmsAccessorV1_18_R1();
-                candyVersion = CandyVersion.V1_18_R1;
-            } else if (Ref.getObcVersion().equals("1_17_R1")) {
-                this.accessor = new NmsAccessorV1_17_R1();
-                candyVersion = CandyVersion.V1_17_R1;
             } else {
                 isUnsupported = true;
                 return;

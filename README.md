@@ -2,6 +2,8 @@
 
 A powerful library for paper platform
 
+**Updated at 2024.4.7**: This library will only support the latest version as a private library
+
 There is only three important sections in this library: command, gui and visual  
 visual includes tablist and scoreboard
 

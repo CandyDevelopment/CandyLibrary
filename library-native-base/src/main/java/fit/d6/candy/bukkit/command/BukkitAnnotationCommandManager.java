@@ -201,9 +201,7 @@ public class BukkitAnnotationCommandManager implements AnnotationCommandManager 
                 CommandBuilder newBuilder = commandManager.createCommand(arg.getName(), resolveArgumentType(arg.getArgumentType().getType()));
                 if (tempBuilder == null) {
                     if (arg.getSuggestion().length > 0) {
-                        newBuilder.suggests((context, argument, suggestion) -> {
-                            Arrays.stream(arg.getSuggestion()).forEach(suggestion::suggests);
-                        });
+                        newBuilder.suggests((context, argument, suggestion) -> Arrays.stream(arg.getSuggestion()).forEach(suggestion::suggests));
                     }
                     if (method.getAnnotation(RequiresPlayer.class) != null) {
                         newBuilder.executesPlayer(executor);
@@ -261,11 +259,11 @@ public class BukkitAnnotationCommandManager implements AnnotationCommandManager 
         }
     }
 
-    private boolean isSub(Class<?> clazz, Class[] classes) {
-        List<Class> classList = List.of(classes);
+    private boolean isSub(Class<?> clazz, Class<?>[] classes) {
+        List<Class<?>> classList = List.of(classes);
         if (classList.contains(clazz))
             return true;
-        for (Class clz : classList) {
+        for (Class<?> clz : classList) {
             if (clazz.isAssignableFrom(clz))
                 return true;
         }

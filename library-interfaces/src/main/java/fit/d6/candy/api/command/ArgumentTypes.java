@@ -59,14 +59,14 @@ public enum ArgumentTypes {
     ROTATION(new Class[]{Rotation.class}),
     DURATION(new Class[]{Duration.class});
 
-    private final Class[] classes;
+    private final Class<?>[] classes;
 
-    ArgumentTypes(Class[] classes) {
+    ArgumentTypes(Class<?>[] classes) {
         this.classes = classes;
     }
 
     @NotNull
-    public Class[] getClasses() {
+    public Class<?>[] getClasses() {
         return classes;
     }
 

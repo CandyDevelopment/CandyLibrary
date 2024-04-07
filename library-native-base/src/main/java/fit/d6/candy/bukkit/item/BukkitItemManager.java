@@ -4,11 +4,17 @@ import fit.d6.candy.api.item.ItemManager;
 import fit.d6.candy.api.item.ItemStackBuilder;
 import fit.d6.candy.api.nbt.NbtCompound;
 import fit.d6.candy.bukkit.nms.NmsAccessor;
+import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class BukkitItemManager implements ItemManager {
+
+    @Override
+    public @NotNull ItemStack newCraftItemStack(@NotNull Material type) {
+        return NmsAccessor.getAccessor().newCraftItemStack(type);
+    }
 
     @Override
     public @NotNull ItemStackBuilder createItemStackBuilder() {

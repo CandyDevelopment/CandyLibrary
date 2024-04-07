@@ -354,4 +354,6 @@ public interface NmsAccessor extends Service {
 
     RootCommandNode<?> getRootCommandNode();
 
+    ItemStack newCraftItemStack(Material type);
+
 }
